@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "cost-calculator"
+version = "0.1.0"
+description = ""
+authors = ["ORyomei <o.ryomei1020@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8.0"
+openpyxl = "*"
+
+[tool.poetry.dev-dependencies]
+yapf = "^0.31.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
