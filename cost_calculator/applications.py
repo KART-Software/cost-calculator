@@ -1,6 +1,6 @@
 from enum import Enum
 import openpyxl
-import pathlib
+
 
 from openpyxl.worksheet.worksheet import Worksheet
 
@@ -14,7 +14,14 @@ class CostCategory(Enum):
 
 
 class Cost(float):
-    pass
+    def __add__(self, other):
+        return Cost(float(self) + float(other))
+
+    def __sub__(self, other):
+        return Cost(float(self) - float(other))
+
+    def __mul__(self, other):
+        return Cost(float(self) * float(other))
 
 
 class CostTableToFca:
@@ -52,25 +59,25 @@ class FcaToBom:
         pass
 
 
-class CostTable(Worksheet):
+class CostTable:
     NAME_AND_VALUE_NAME = {
         CostCategory.Material: ("Material", ("Table Price", "Calc Value")),
-        CostCategory.Process: ("Process", ("Unit Cost")),
-        CostCategory.ProcessMultiplier: ("Process Multiplier", "Multiplier"),
+        CostCategory.Process: ("Process", ("Unit Cost",)),
+        CostCategory.ProcessMultiplier: ("Process Multiplier", ("Multiplier",)),
         CostCategory.Fastener: ("Fastener", ("Table Price", "Calc Price")),
-        CostCategory.Tooling: ("Process", ("Cost")),
+        CostCategory.Tooling: ("Process", ("Cost",)),
     }
     NAME_COLUMN_NUMBER = 1
 
     def __init__(self, costCategory: CostCategory, path: str):
-        self = openpyxl.load_workbook(path).worksheets[0]
+        self.costSheet = openpyxl.load_workbook(path, data_only=True).worksheets[0]
         self.costCategory = costCategory
         self._setBaseRowAndCollumNumber()
 
     def _setBaseRowAndCollumNumber(self):
         for i in range(1, 5):
             if (
-                self[i][CostTable.NAME_COLUMN_NUMBER].value
+                self.costSheet[i][CostTable.NAME_COLUMN_NUMBER].value
                 == CostTable.NAME_AND_VALUE_NAME[self.costCategory][0]
             ):
                 self.baseRowNumber = i
@@ -79,17 +86,21 @@ class CostTable(Worksheet):
                 # error
                 break
         numbers = []
-        for j, cell in enumerate(self[self.baseRowNumber]):
+        for j, cell in enumerate(self.costSheet[self.baseRowNumber]):
             if cell.value in CostTable.NAME_AND_VALUE_NAME[self.costCategory][1]:
                 numbers.append(j)
         self.valueCollumNumbers = tuple(numbers)
 
-    def getCost(self, costName: str):
-        for i in range(self.baseRowNumber + 1, self.max_row):
-            if self[i][CostTable.NAME_COLUMN_NUMBER] == None:
+    def getCost(self, costName: str) -> Cost:
+        for i in range(self.baseRowNumber + 1, self.costSheet.max_row):
+            if self.costSheet[i][CostTable.NAME_COLUMN_NUMBER].value == None:
                 # error
                 break
-            if self[i][CostTable.NAME_COLUMN_NUMBER] == costName:
+            if self.costSheet[i][CostTable.NAME_COLUMN_NUMBER].value == costName:
+                # print(i)
                 for j in self.valueCollumNumbers:
-                    if type(self[i][j]) == float:
-                        return Cost(self[i][j])
+                    if (
+                        type(self.costSheet[i][j].value) == float
+                        or type(self.costSheet[i][j].value) == int
+                    ):
+                        return Cost(float(self.costSheet[i][j].value))
