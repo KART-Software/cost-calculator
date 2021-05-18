@@ -42,8 +42,15 @@ class CostTableToFca:
     def setFca(self, path: str):
         self.fca = Fca(path)
 
-    def start():
-        pass
+    def start(self):
+        for sheet in self.fca.fcaSheets:
+            sheet.enterCost(CostCategory.Material, self.tableMaterials)
+            sheet.enterProcessCost(self.tableProesses, self.tableProcessMultipliers)
+            sheet.enterCost(CostCategory.Fastener, self.tableFasteners)
+            sheet.enterCost(CostCategory.Tooling, self.tableTooling)
+
+    def save(self):
+        self.fca.fcaBook.save(self.fca.filePath)
 
 
 class CostTable:
@@ -96,6 +103,7 @@ class FcaSheet:
     CATEGORY_COLUMN = 1
     UNIT_COST_COLUMN = 3
     MULTIPLIER_COLUMN = 6
+    MULTVAL_COLUMN = 7
 
     def __init__(self, fcaSheet: Worksheet):
         self.fcaSheet = fcaSheet
@@ -114,8 +122,51 @@ class FcaSheet:
                     break
                 row += 1
 
-    def enterCost(self, row: int, cost: Cost):
-        self.fcaSheet.cell(row=row, column=FcaSheet.UNIT_COST_COLUMN, value=Cost)
+    def enterCost(self, category: CostCategory, costTable: CostTable):
+        if category == CostCategory.Process:
+            # error
+            pass
+        row = self.categoryRows[category] + 1
+        while True:
+            if (
+                self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == "None"
+                or self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == None
+            ):
+                break
+            self.fcaSheet.cell(
+                row=row,
+                column=FcaSheet.UNIT_COST_COLUMN,
+                value=costTable.getCost(
+                    self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value
+                ),
+            )
+
+    def enterProcessCost(
+        self, tableProcesses: CostTable, tableProcessMultipliers: CostTable
+    ):
+        row = self.categoryRows[CostCategory.Process] + 1
+        while True:
+            if (
+                self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == "None"
+                or self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == None
+            ):
+                break
+            cost = tableProcesses.getCost(
+                self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value
+            )
+            self.fcaSheet.cell(row=row, column=FcaSheet.UNIT_COST_COLUMN, value=cost)
+            # multiplier = tableProcessMultipliers.getCost(
+            #     self.fcaSheet[row][FcaSheet.MULTIPLIER_COLUMN].value
+            # ) if self.fcaSheet[row][FcaSheet.MULTIPLIER_COLUMN].value != None else
+            if self.fcaSheet[row][FcaSheet.MULTIPLIER_COLUMN].value == None:
+                multiplier = Cost(1.0)
+            else:
+                multiplier = tableProcessMultipliers.getCost(
+                    self.fcaSheet[row][FcaSheet.MULTIPLIER_COLUMN].value
+                )
+                self.fcaSheet.cell(
+                    row=row, column=FcaSheet.MULTVAL_COLUMN, value=multiplier
+                )
 
 
 class Fca:
