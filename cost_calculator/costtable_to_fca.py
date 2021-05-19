@@ -31,12 +31,14 @@ class CostTableToFca:
         TableFastenersPath: str,
         TableToolingPath: str,
     ):
-        self.tableMaterials = CostTable(CostCategory.Material, tableMaterialsPath)
-        self.tableProesses = CostTable(CostCategory.Process, tableProcessesPath)
+        self.tableMaterials = CostTable(CostCategory.Material,
+                                        tableMaterialsPath)
+        self.tableProesses = CostTable(CostCategory.Process,
+                                       tableProcessesPath)
         self.tableProcessMultipliers = CostTable(
-            CostCategory.ProcessMultiplier, tableProcessMultipliersPath
-        )
-        self.tableFasteners = CostTable(CostCategory.Fastener, TableFastenersPath)
+            CostCategory.ProcessMultiplier, tableProcessMultipliersPath)
+        self.tableFasteners = CostTable(CostCategory.Fastener,
+                                        TableFastenersPath)
         self.tableTooling = CostTable(CostCategory.Tooling, TableToolingPath)
 
     def setFca(self, path: str):
@@ -45,7 +47,8 @@ class CostTableToFca:
     def start(self):
         for sheet in self.fca.fcaSheets:
             sheet.enterCost(CostCategory.Material, self.tableMaterials)
-            sheet.enterProcessCost(self.tableProesses, self.tableProcessMultipliers)
+            sheet.enterProcessCost(self.tableProesses,
+                                   self.tableProcessMultipliers)
             sheet.enterCost(CostCategory.Fastener, self.tableFasteners)
             sheet.enterCost(CostCategory.Tooling, self.tableTooling)
 
@@ -56,24 +59,24 @@ class CostTableToFca:
 class CostTable:
     NAME_AND_VALUE_NAME = {
         CostCategory.Material: ("Material", ("Table Price", "Calc Value")),
-        CostCategory.Process: ("Process", ("Unit Cost",)),
-        CostCategory.ProcessMultiplier: ("Process Multiplier", ("Multiplier",)),
+        CostCategory.Process: ("Process", ("Unit Cost", )),
+        CostCategory.ProcessMultiplier:
+        ("Process Multiplier", ("Multiplier", )),
         CostCategory.Fastener: ("Fastener", ("Table Price", "Calc Price")),
-        CostCategory.Tooling: ("Process", ("Cost",)),
+        CostCategory.Tooling: ("Process", ("Cost", )),
     }
     NAME_COLUMN = 1
 
     def __init__(self, costCategory: CostCategory, path: str):
-        self.costSheet = openpyxl.load_workbook(path, data_only=True).worksheets[0]
+        self.costSheet = openpyxl.load_workbook(path,
+                                                data_only=True).worksheets[0]
         self.costCategory = costCategory
         self._setBaseRowAndCollum()
 
     def _setBaseRowAndCollum(self):
         for i in range(1, 5):
-            if (
-                self.costSheet[i][CostTable.NAME_COLUMN].value
-                == CostTable.NAME_AND_VALUE_NAME[self.costCategory][0]
-            ):
+            if (self.costSheet[i][CostTable.NAME_COLUMN].value ==
+                    CostTable.NAME_AND_VALUE_NAME[self.costCategory][0]):
                 self.baseRow = i
                 break
             if i >= 4:
@@ -81,7 +84,8 @@ class CostTable:
                 break
         numbers = []
         for j, cell in enumerate(self.costSheet[self.baseRow]):
-            if cell.value in CostTable.NAME_AND_VALUE_NAME[self.costCategory][1]:
+            if cell.value in CostTable.NAME_AND_VALUE_NAME[
+                    self.costCategory][1]:
                 numbers.append(j)
         self.valueCollums = tuple(numbers)
 
@@ -92,10 +96,8 @@ class CostTable:
                 break
             if self.costSheet[i][CostTable.NAME_COLUMN].value == costName:
                 for j in self.valueCollums:
-                    if (
-                        type(self.costSheet[i][j].value) == float
-                        or type(self.costSheet[i][j].value) == int
-                    ):
+                    if (type(self.costSheet[i][j].value) == float
+                            or type(self.costSheet[i][j].value) == int):
                         return Cost(float(self.costSheet[i][j].value))
 
 
@@ -116,7 +118,8 @@ class FcaSheet:
             if category == CostCategory.ProcessMultiplier:
                 continue
             while True:
-                if self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == category.value:
+                if self.fcaSheet[row][
+                        FcaSheet.CATEGORY_COLUMN].value == category.value:
                     self.categoryRows[category] = row
                     row += 1
                     break
@@ -128,33 +131,31 @@ class FcaSheet:
             pass
         row = self.categoryRows[category] + 1
         while True:
-            if (
-                self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == "None"
-                or self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == None
-            ):
+            if (self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == "None"
+                    or self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value
+                    == None):
                 break
             self.fcaSheet.cell(
                 row=row,
                 column=FcaSheet.UNIT_COST_COLUMN,
                 value=costTable.getCost(
-                    self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value
-                ),
+                    self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value),
             )
 
-    def enterProcessCost(
-        self, tableProcesses: CostTable, tableProcessMultipliers: CostTable
-    ):
+    def enterProcessCost(self, tableProcesses: CostTable,
+                         tableProcessMultipliers: CostTable):
+
         row = self.categoryRows[CostCategory.Process] + 1
         while True:
-            if (
-                self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == "None"
-                or self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == None
-            ):
+            if (self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == "None"
+                    or self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value
+                    == None):
                 break
             cost = tableProcesses.getCost(
-                self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value
-            )
-            self.fcaSheet.cell(row=row, column=FcaSheet.UNIT_COST_COLUMN, value=cost)
+                self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value)
+            self.fcaSheet.cell(row=row,
+                               column=FcaSheet.UNIT_COST_COLUMN,
+                               value=cost)
             # multiplier = tableProcessMultipliers.getCost(
             #     self.fcaSheet[row][FcaSheet.MULTIPLIER_COLUMN].value
             # ) if self.fcaSheet[row][FcaSheet.MULTIPLIER_COLUMN].value != None else
@@ -162,11 +163,10 @@ class FcaSheet:
                 multiplier = Cost(1.0)
             else:
                 multiplier = tableProcessMultipliers.getCost(
-                    self.fcaSheet[row][FcaSheet.MULTIPLIER_COLUMN].value
-                )
-                self.fcaSheet.cell(
-                    row=row, column=FcaSheet.MULTVAL_COLUMN, value=multiplier
-                )
+                    self.fcaSheet[row][FcaSheet.MULTIPLIER_COLUMN].value)
+                self.fcaSheet.cell(row=row,
+                                   column=FcaSheet.MULTVAL_COLUMN,
+                                   value=multiplier)
 
 
 class Fca:

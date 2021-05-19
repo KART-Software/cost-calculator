@@ -9,7 +9,7 @@ python = "^3.8.0"
 openpyxl = "*"
 
 [tool.poetry.dev-dependencies]
-black = "^21.5b1"
+yapf = "0.30.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
