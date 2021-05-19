@@ -54,29 +54,45 @@ class CostTableToFca:
 
     def save(self):
         self.fca.fcaBook.save(self.fca.filePath)
+        del self.fca
 
 
 class CostTable:
-    NAME_AND_VALUE_NAME = {
-        CostCategory.Material: ("Material", ("Table Price", "Calc Value")),
-        CostCategory.Process: ("Process", ("Unit Cost", )),
+    GENERICTERM_VALUENAME_SHEETTITLE = {
+        CostCategory.Material:
+        ("Material", ("Table Price", "Calc Value"), "tblMaterials"),
+        CostCategory.Process: ("Process", ("Unit Cost", ), "tblProcesses"),
         CostCategory.ProcessMultiplier:
-        ("Process Multiplier", ("Multiplier", )),
-        CostCategory.Fastener: ("Fastener", ("Table Price", "Calc Price")),
-        CostCategory.Tooling: ("Process", ("Cost", )),
+        ("Process Multiplier", ("Multiplier", ), "tblProcessMultipliers"),
+        CostCategory.Fastener:
+        ("Fastener", ("Table Price", "Calc Price"), "tblFasteners"),
+        CostCategory.Tooling: ("Process", ("Cost", ), "tblToolings"),
     }
     NAME_COLUMN = 1
 
-    def __init__(self, costCategory: CostCategory, path: str):
+    def __init__(self, path: str):
         self.costSheet = openpyxl.load_workbook(path,
                                                 data_only=True).worksheets[0]
-        self.costCategory = costCategory
-        self._setBaseRowAndCollum()
+        self._detectCategory()
+        self._detectBaseRowAndCollum()
 
-    def _setBaseRowAndCollum(self):
+    def _detectCategory(self):
+        isNotCostTable = True
+        for category in CostCategory:
+            if self.costSheet.title == CostTable.GENERICTERM_VALUENAME_SHEETTITLE[
+                    category][2]:
+                self.category = category
+                break
+            isNotCostTable = isNotCostTable and self.costSheet.title == CostTable.GENERICTERM_VALUENAME_SHEETTITLE[
+                category][2]
+        if isNotCostTable:
+            #error
+            pass
+
+    def _detectBaseRowAndCollum(self):
         for i in range(1, 5):
-            if (self.costSheet[i][CostTable.NAME_COLUMN].value ==
-                    CostTable.NAME_AND_VALUE_NAME[self.costCategory][0]):
+            if (self.costSheet[i][CostTable.NAME_COLUMN].value == CostTable.
+                    GENERICTERM_VALUENAME_SHEETTITLE[self.category][0]):
                 self.baseRow = i
                 break
             if i >= 4:
@@ -84,8 +100,8 @@ class CostTable:
                 break
         numbers = []
         for j, cell in enumerate(self.costSheet[self.baseRow]):
-            if cell.value in CostTable.NAME_AND_VALUE_NAME[
-                    self.costCategory][1]:
+            if cell.value in CostTable.GENERICTERM_VALUENAME_SHEETTITLE[
+                    self.category][1]:
                 numbers.append(j)
         self.valueCollums = tuple(numbers)
 
@@ -109,9 +125,9 @@ class FcaSheet:
 
     def __init__(self, fcaSheet: Worksheet):
         self.fcaSheet = fcaSheet
-        self._setCategoryRows()
+        self._detectCategoryRows()
 
-    def _setCategoryRows(self):
+    def _detectCategoryRows(self):
         self.categoryRows = {}
         row = 9
         for category in CostCategory:
