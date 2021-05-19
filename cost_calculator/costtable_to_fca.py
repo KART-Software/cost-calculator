@@ -1,14 +1,24 @@
-from enum import Enum
+from enum import IntEnum
+from typing import List
 import openpyxl
+from glob import glob
+from openpyxl.styles.styleable import NumberFormatDescriptor
 from openpyxl.worksheet.worksheet import Worksheet
 
 
-class CostCategory(Enum):
-    Material = "Material"
-    Process = "Process"
-    ProcessMultiplier = "ProcessMultiPlier"
-    Fastener = "Fastener"
-    Tooling = "Tooling"
+class CostCategory(IntEnum):
+    Material = 0
+    Process = 1
+    ProcessMultiplier = 2
+    Fastener = 3
+    Tooling = 4
+
+    @property
+    def categoryName(self) -> str:
+        CATEGORY_NAMES = [
+            "Material", "Process", "ProcessMultiplier", "Fastener", "Tooling"
+        ]
+        return CATEGORY_NAMES[self]
 
 
 class Cost(float):
@@ -23,23 +33,37 @@ class Cost(float):
 
 
 class CostTableToFca:
-    def setCostTables(
-        self,
-        tableMaterialsPath: str,
-        tableProcessesPath: str,
-        tableProcessMultipliersPath: str,
-        TableFastenersPath: str,
-        TableToolingPath: str,
-    ):
-        self.tableMaterials = CostTable(CostCategory.Material,
-                                        tableMaterialsPath)
-        self.tableProesses = CostTable(CostCategory.Process,
-                                       tableProcessesPath)
-        self.tableProcessMultipliers = CostTable(
-            CostCategory.ProcessMultiplier, tableProcessMultipliersPath)
-        self.tableFasteners = CostTable(CostCategory.Fastener,
-                                        TableFastenersPath)
-        self.tableTooling = CostTable(CostCategory.Tooling, TableToolingPath)
+    def setCostTables(self, costTablesDirectryPath: str):
+        costTableFiles = glob(costTablesDirectryPath + "/*")
+        if len(costTableFiles) != 5:
+            #error
+            pass
+        costTables = [CostTable(path) for path in costTableFiles]
+        categoryOfTables = [table.category for table in costTables]
+        for i in range(5):
+            for j in range(5):
+                if i != j and categoryOfTables[i] == categoryOfTables[j]:
+                    #error
+                    pass
+        costTablesSorted: List[CostTable]
+        costTablesSorted = list(range(5))
+        for i in range(5):
+            costTablesSorted[categoryOfTables[i]] = costTables[i]
+        self.tableMaterials = costTablesSorted[0]
+        self.tableProesses = costTablesSorted[1]
+        self.tableProcessMultipliers = costTablesSorted[2]
+        self.tableFasteners = costTablesSorted[3]
+        self.tableTooling = costTablesSorted[4]
+
+        # self.tableMaterials = CostTable(CostCategory.Material,
+        #                                 tableMaterialsPath)
+        # self.tableProesses = CostTable(CostCategory.Process,
+        #                                tableProcessesPath)
+        # self.tableProcessMultipliers = CostTable(
+        #     CostCategory.ProcessMultiplier, tableProcessMultipliersPath)
+        # self.tableFasteners = CostTable(CostCategory.Fastener,
+        #                                 TableFastenersPath)
+        # self.tableTooling = CostTable(CostCategory.Tooling, TableToolingPath)
 
     def setFca(self, path: str):
         self.fca = Fca(path)
@@ -58,17 +82,27 @@ class CostTableToFca:
 
 
 class CostTable:
-    GENERICTERM_VALUENAME_SHEETTITLE = {
-        CostCategory.Material:
-        ("Material", ("Table Price", "Calc Value"), "tblMaterials"),
-        CostCategory.Process: ("Process", ("Unit Cost", ), "tblProcesses"),
-        CostCategory.ProcessMultiplier:
-        ("Process Multiplier", ("Multiplier", ), "tblProcessMultipliers"),
-        CostCategory.Fastener:
-        ("Fastener", ("Table Price", "Calc Price"), "tblFasteners"),
-        CostCategory.Tooling: ("Process", ("Cost", ), "tblToolings"),
-    }
-    NAME_COLUMN = 1
+    # GENERICTERM_VALUENAME_SHEETTITLE = {
+    #     CostCategory.Material:
+    #     ("Material", ("Table Price", "Calc Value"), "tblMaterials"),
+    #     CostCategory.Process: ("Process", ("Unit Cost", ), "tblProcesses"),
+    #     CostCategory.ProcessMultiplier:
+    #     ("Process Multiplier", ("Multiplier", ), "tblProcessMultipliers"),
+    #     CostCategory.Fastener:
+    #     ("Fastener", ("Table Price", "Calc Price"), "tblFasteners"),
+    #     CostCategory.Tooling: ("Process", ("Cost", ), "tblToolings"),
+    # }
+    GENERIC_TERM = [
+        "Material", "Process", "Process Multiplier", "Fastener", "Process"
+    ]
+    VALUE_NAME = [("Table Price", "Calc Value"), ("Unit Cost", ),
+                  ("Multiplier", ), ("Table Price", "Calc Price"), ("Cost", )]
+    SHEET_TITLE = [
+        "tblMaterials", "tblProcesses", "tblProcessMultipliers",
+        "tblFasteners", "tblTooling"
+    ]
+
+    GENERIC_TERM_COLUMN = 1
 
     def __init__(self, path: str):
         self.costSheet = openpyxl.load_workbook(path,
@@ -79,20 +113,19 @@ class CostTable:
     def _detectCategory(self):
         isNotCostTable = True
         for category in CostCategory:
-            if self.costSheet.title == CostTable.GENERICTERM_VALUENAME_SHEETTITLE[
-                    category][2]:
+            if self.costSheet.title == CostTable.SHEET_TITLE[category]:
                 self.category = category
                 break
-            isNotCostTable = isNotCostTable and self.costSheet.title == CostTable.GENERICTERM_VALUENAME_SHEETTITLE[
-                category][2]
-        if isNotCostTable:
+            isNotCostTable = isNotCostTable and self.costSheet.title != CostTable.SHEET_TITLE[
+                category]
+        if isNotCostTable == True:
             #error
             pass
 
     def _detectBaseRowAndCollum(self):
         for i in range(1, 5):
-            if (self.costSheet[i][CostTable.NAME_COLUMN].value == CostTable.
-                    GENERICTERM_VALUENAME_SHEETTITLE[self.category][0]):
+            if (self.costSheet[i][CostTable.GENERIC_TERM_COLUMN].value ==
+                    CostTable.GENERIC_TERM[self.category]):
                 self.baseRow = i
                 break
             if i >= 4:
@@ -100,17 +133,17 @@ class CostTable:
                 break
         numbers = []
         for j, cell in enumerate(self.costSheet[self.baseRow]):
-            if cell.value in CostTable.GENERICTERM_VALUENAME_SHEETTITLE[
-                    self.category][1]:
+            if cell.value in CostTable.VALUE_NAME[self.category]:
                 numbers.append(j)
         self.valueCollums = tuple(numbers)
 
     def getCost(self, costName: str) -> Cost:
         for i in range(self.baseRow + 1, self.costSheet.max_row + 1):
-            if self.costSheet[i][CostTable.NAME_COLUMN].value == None:
+            if self.costSheet[i][CostTable.GENERIC_TERM_COLUMN].value == None:
                 # error
                 break
-            if self.costSheet[i][CostTable.NAME_COLUMN].value == costName:
+            if self.costSheet[i][
+                    CostTable.GENERIC_TERM_COLUMN].value == costName:
                 for j in self.valueCollums:
                     if (type(self.costSheet[i][j].value) == float
                             or type(self.costSheet[i][j].value) == int):
@@ -135,7 +168,8 @@ class FcaSheet:
                 continue
             while True:
                 if self.fcaSheet[row][
-                        FcaSheet.CATEGORY_COLUMN].value == category.value:
+                        FcaSheet.
+                        CATEGORY_COLUMN].value == category.categoryName:
                     self.categoryRows[category] = row
                     row += 1
                     break
@@ -147,30 +181,31 @@ class FcaSheet:
             pass
         row = self.categoryRows[category] + 1
         while True:
-            if (self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == "None"
-                    or self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value
-                    == None):
+            if (self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == None):
+                break
+            if (self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == "None"):
+                self.fcaSheet.cell(row=row,
+                                   column=FcaSheet.UNIT_COST_COLUMN + 1,
+                                   value=0)
                 break
             self.fcaSheet.cell(
                 row=row,
-                column=FcaSheet.UNIT_COST_COLUMN,
+                column=FcaSheet.UNIT_COST_COLUMN + 1,
                 value=costTable.getCost(
-                    self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value),
-            )
+                    self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value))
+            row += 1
 
     def enterProcessCost(self, tableProcesses: CostTable,
                          tableProcessMultipliers: CostTable):
 
         row = self.categoryRows[CostCategory.Process] + 1
         while True:
-            if (self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == "None"
-                    or self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value
-                    == None):
+            if (self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == None):
                 break
             cost = tableProcesses.getCost(
                 self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value)
             self.fcaSheet.cell(row=row,
-                               column=FcaSheet.UNIT_COST_COLUMN,
+                               column=FcaSheet.UNIT_COST_COLUMN + 1,
                                value=cost)
             # multiplier = tableProcessMultipliers.getCost(
             #     self.fcaSheet[row][FcaSheet.MULTIPLIER_COLUMN].value
@@ -181,12 +216,17 @@ class FcaSheet:
                 multiplier = tableProcessMultipliers.getCost(
                     self.fcaSheet[row][FcaSheet.MULTIPLIER_COLUMN].value)
                 self.fcaSheet.cell(row=row,
-                                   column=FcaSheet.MULTVAL_COLUMN,
+                                   column=FcaSheet.MULTVAL_COLUMN + 1,
                                    value=multiplier)
+            row += 1
 
 
 class Fca:
     def __init__(self, path: str):
         self.filePath = path
         self.fcaBook = openpyxl.load_workbook(path)
-        self.fcaSheets = [FcaSheet(sheet) for sheet in self.fcaBook.worksheets]
+        # self.fcaSheets = [FcaSheet(sheet) for sheet in self.fcaBook.worksheets]
+        self.fcaSheets = []
+        for sheet in self.fcaBook.worksheets:
+            if sheet["A1"].value == "University":
+                self.fcaSheets.append(FcaSheet(sheet))
