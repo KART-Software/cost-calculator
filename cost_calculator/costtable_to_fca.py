@@ -9,7 +9,8 @@ def costTableToFca(costTablesDirectryPath: str,
                    fcaDirectryPath: str,
                    deleteMode=False):
     costTableToFca = CostTableToFca()
-    costTableToFca.setCostTables(costTablesDirectryPath)
+    if deleteMode == False:
+        costTableToFca.setCostTables(costTablesDirectryPath)
     fcaFilePaths = glob(fcaDirectryPath + "/*")
     for path in fcaFilePaths:
         costTableToFca.setFca(path)
