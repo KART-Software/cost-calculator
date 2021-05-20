@@ -2,8 +2,22 @@ from enum import IntEnum
 from typing import List
 import openpyxl
 from glob import glob
-from openpyxl.styles.styleable import NumberFormatDescriptor
 from openpyxl.worksheet.worksheet import Worksheet
+
+
+def costTableToFca(costTablesDirectryPath: str,
+                   fcaDirectryPath: str,
+                   deleteMode=False):
+    costTableToFca = CostTableToFca()
+    costTableToFca.setCostTables(costTablesDirectryPath)
+    fcaFilePaths = glob(fcaDirectryPath + "/*")
+    for path in fcaFilePaths:
+        costTableToFca.setFca(path)
+        if deleteMode == True:
+            costTableToFca.deleteCost()
+        else:
+            costTableToFca.start()
+        costTableToFca.save()
 
 
 class CostCategory(IntEnum):
@@ -34,11 +48,11 @@ class Cost(float):
 
 class CostTableToFca:
     def setCostTables(self, costTablesDirectryPath: str):
-        costTableFiles = glob(costTablesDirectryPath + "/*")
-        if len(costTableFiles) != 5:
+        costTableFilePaths = glob(costTablesDirectryPath + "/*")
+        if len(costTableFilePaths) != 5:
             #error
             pass
-        costTables = [CostTable(path) for path in costTableFiles]
+        costTables = [CostTable(path) for path in costTableFilePaths]
         categoryOfTables = [table.category for table in costTables]
         for i in range(5):
             for j in range(5):
@@ -54,16 +68,8 @@ class CostTableToFca:
         self.tableProcessMultipliers = costTablesSorted[2]
         self.tableFasteners = costTablesSorted[3]
         self.tableTooling = costTablesSorted[4]
-
-        # self.tableMaterials = CostTable(CostCategory.Material,
-        #                                 tableMaterialsPath)
-        # self.tableProesses = CostTable(CostCategory.Process,
-        #                                tableProcessesPath)
-        # self.tableProcessMultipliers = CostTable(
-        #     CostCategory.ProcessMultiplier, tableProcessMultipliersPath)
-        # self.tableFasteners = CostTable(CostCategory.Fastener,
-        #                                 TableFastenersPath)
-        # self.tableTooling = CostTable(CostCategory.Tooling, TableToolingPath)
+        #self.tableMaterials = next(filter(lambda x : x.category == CostCategory.Material, costTables), None)
+        #elm = next(filter(lambda x: x.endswith("n"), fruits), None)
 
     def setFca(self, path: str):
         self.fca = Fca(path)
@@ -76,9 +82,15 @@ class CostTableToFca:
             sheet.enterCost(CostCategory.Fastener, self.tableFasteners)
             sheet.enterCost(CostCategory.Tooling, self.tableTooling)
 
+    def deleteCost(self):
+        for sheet in self.fca.fcaSheets:
+            sheet.deleteCost(CostCategory.Material)
+            sheet.deleteProcessCost()
+            sheet.deleteCost(CostCategory.Fastener)
+            sheet.deleteCost(CostCategory.Tooling)
+
     def save(self):
         self.fca.fcaBook.save(self.fca.filePath)
-        del self.fca
 
 
 class CostTable:
@@ -207,9 +219,6 @@ class FcaSheet:
             self.fcaSheet.cell(row=row,
                                column=FcaSheet.UNIT_COST_COLUMN + 1,
                                value=cost)
-            # multiplier = tableProcessMultipliers.getCost(
-            #     self.fcaSheet[row][FcaSheet.MULTIPLIER_COLUMN].value
-            # ) if self.fcaSheet[row][FcaSheet.MULTIPLIER_COLUMN].value != None else
             if self.fcaSheet[row][FcaSheet.MULTIPLIER_COLUMN].value == None:
                 multiplier = Cost(1.0)
             else:
@@ -220,8 +229,36 @@ class FcaSheet:
                                    value=multiplier)
             row += 1
 
+    def deleteCost(self, category: CostCategory):
+        if category == CostCategory.Process:
+            # error
+            pass
+        row = self.categoryRows[category] + 1
+        while True:
+            if (self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == None):
+                break
+            self.fcaSheet.cell(row=row,
+                               column=FcaSheet.UNIT_COST_COLUMN + 1,
+                               value="")
+            row += 1
+
+    def deleteProcessCost(self):
+        row = self.categoryRows[CostCategory.Process] + 1
+        while True:
+            if (self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == None):
+                break
+            self.fcaSheet.cell(row=row,
+                               column=FcaSheet.UNIT_COST_COLUMN + 1,
+                               value="")
+            self.fcaSheet.cell(row=row,
+                               column=FcaSheet.MULTVAL_COLUMN + 1,
+                               value="")
+            row += 1
+
 
 class Fca:
+    fcaSheets: List[FcaSheet]
+
     def __init__(self, path: str):
         self.filePath = path
         self.fcaBook = openpyxl.load_workbook(path)
