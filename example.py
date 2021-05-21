@@ -1,3 +1,4 @@
+from cost_calculator.cost_table import CostTable
 import openpyxl
 from cost_calculator import costTableToFca
 
@@ -9,3 +10,5 @@ from cost_calculator import costTableToFca
 
 costTableToFca("example/cost_table_files", "example/fca_files")
 # costTableToFca("", "example/fca_files", deleteMode=True)
+# costTable = CostTable("tables/tblmpl.xlsx")
+# print(costTable.getCost("Aluminium"))
