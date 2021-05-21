@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
 
@@ -12,35 +12,38 @@ class FcaSheet:
     MULTIPLIER_COLUMN = 7
     MULTVAL_COLUMN = 8
     CATEGORY_ROW_TO_CHECK_FROM = 9
-    categoryRows: List[int]
+    categoryRowRanges: List[tuple]
     subTotalColumns: List[int]
 
     def __init__(self, fcaSheet: Worksheet):
         self.fcaSheet = fcaSheet
-        self._detectCategoryRows()
-        self._detectSubTotalColumn()
+        self._detectCategoryRowRanges()
+        self._detectSubTotalColumns()
 
-    def _detectCategoryRows(self):
-        self.categoryRows = list(range(5))
-        self.categoryRows[CostCategory.ProcessMultiplier] = None
-        row = FcaSheet.CATEGORY_ROW_TO_CHECK_FROM
-        for category in CostCategory:
-            if category != CostCategory.ProcessMultiplier:
-                while True:
-                    if self.fcaSheet.cell(row, FcaSheet.CATEGORY_COLUMN
-                                          ).value == category.categoryName:
-                        self.categoryRows[category] = row
-                        row += 1
-                        break
-                    row += 1
+    def _detectCategoryRowRanges(self):
+        category: CostCategory
+        startRow: int
+        self.categoryRowRanges = [None, None, None, None, None]
+        startRow = None
+        for row in range(FcaSheet.CATEGORY_ROW_TO_CHECK_FROM,
+                         self.fcaSheet.max_row + 1):
+            cellValue = self.fcaSheet.cell(row, FcaSheet.CATEGORY_COLUMN).value
+            if cellValue in Cost.CATEGORY_NAMES:
+                category = Cost.CATEGORY_NAMES.index(cellValue)
+                startRow = row
+            if startRow:
+                if row > startRow and cellValue == None:
+                    endRow = row - 1
+                    self.categoryRowRanges[category] = (startRow, endRow)
+                    startRow = None
 
-    def _detectSubTotalColumn(self):
+    def _detectSubTotalColumns(self):
         self.subTotalColumns = list(range(5))
         self.subTotalColumns[CostCategory.ProcessMultiplier] = None
         for category in CostCategory:
             if category != CostCategory.ProcessMultiplier:
                 for column in range(1, self.fcaSheet.max_column + 1):
-                    if self.fcaSheet.cell(self.categoryRows[category],
+                    if self.fcaSheet.cell(self.categoryRowRanges[category][0],
                                           column).value == "Sub Total":
                         self.subTotalColumns[category] = column
                         column += 1
@@ -51,7 +54,7 @@ class FcaSheet:
         if category == CostCategory.Process:
             # error
             pass
-        row = self.categoryRows[category] + 1
+        row = self.categoryRowRanges[category][0] + 1
         while True:
             if (self.fcaSheet.cell(row,
                                    FcaSheet.CATEGORY_COLUMN).value == None):
@@ -70,7 +73,7 @@ class FcaSheet:
     def enterProcessCost(self, tableProcesses: CostTable,
                          tableProcessMultipliers: CostTable):
         MULTIPLIER_PREFIXES = ["", "Machine - ", "Material - "]
-        row = self.categoryRows[CostCategory.Process] + 1
+        row = self.categoryRowRanges[CostCategory.Process][0] + 1
         while True:
             if (self.fcaSheet.cell(row,
                                    FcaSheet.CATEGORY_COLUMN).value == None):
@@ -100,7 +103,7 @@ class FcaSheet:
         if category == CostCategory.Process:
             # error
             pass
-        row = self.categoryRows[category] + 1
+        row = self.categoryRowRanges[category][0] + 1
         while True:
             if (self.fcaSheet.cell(row,
                                    FcaSheet.CATEGORY_COLUMN).value == None):
@@ -109,7 +112,7 @@ class FcaSheet:
             row += 1
 
     def deleteProcessCost(self):
-        row = self.categoryRows[CostCategory.Process] + 1
+        row = self.categoryRowRanges[CostCategory.Process][0] + 1
         while True:
             if (self.fcaSheet.cell(row,
                                    FcaSheet.CATEGORY_COLUMN).value == None):

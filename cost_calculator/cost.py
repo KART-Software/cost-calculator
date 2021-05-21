@@ -10,13 +10,15 @@ class CostCategory(IntEnum):
 
     @property
     def categoryName(self) -> str:
-        CATEGORY_NAMES = [
-            "Material", "Process", "ProcessMultiplier", "Fastener", "Tooling"
-        ]
-        return CATEGORY_NAMES[self]
+        return Cost.CATEGORY_NAMES[self]
 
 
 class Cost(float):
+
+    CATEGORY_NAMES = [
+        "Material", "Process", "ProcessMultiplier", "Fastener", "Tooling"
+    ]
+
     def __add__(self, other):
         return Cost(float(self) + float(other))
 
