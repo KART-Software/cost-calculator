@@ -15,8 +15,11 @@ def costTableToFca(costTablesDirectoryPath: str,
     if deleteMode == False:
         costTableToFca.setCostTables(costTablesDirectoryPath)
     fcaFilePaths = glob(fcaDirectoryPath + "/*.xlsx")
+    fcaFilePaths = glob(fcaDirectoryPath + "/*.xls")
     fcaFilePaths.extend(glob(fcaDirectoryPath + "/*/*.xlsx"))
+    fcaFilePaths.extend(glob(fcaDirectoryPath + "/*/*.xls"))
     fcaFilePaths.extend(glob(fcaDirectoryPath + "/*/*/*.xlsx"))
+    fcaFilePaths.extend(glob(fcaDirectoryPath + "/*/*/*.xls"))
 
     for path in fcaFilePaths:
         costTableToFca.setFca(path)
