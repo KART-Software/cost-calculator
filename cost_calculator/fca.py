@@ -69,7 +69,7 @@ class FcaSheet:
 
     def enterProcessCost(self, tableProcesses: CostTable,
                          tableProcessMultipliers: CostTable):
-
+        MULTIPLIER_PREFIXES = ["", "Machine - ", "Material - "]
         row = self.categoryRows[CostCategory.Process] + 1
         while True:
             if (self.fcaSheet.cell(row,
@@ -84,6 +84,13 @@ class FcaSheet:
             else:
                 multiplier = tableProcessMultipliers.getCost(
                     self.fcaSheet.cell(row, FcaSheet.MULTIPLIER_COLUMN).value)
+                for prefix in MULTIPLIER_PREFIXES:
+                    multiplier_ = tableProcessMultipliers.getCost(
+                        prefix + self.fcaSheet.cell(
+                            row, FcaSheet.MULTIPLIER_COLUMN).value)
+                    if multiplier_ != None:
+                        multiplier = multiplier_
+                        break
                 self.fcaSheet.cell(row,
                                    FcaSheet.MULTVAL_COLUMN,
                                    value=multiplier)
