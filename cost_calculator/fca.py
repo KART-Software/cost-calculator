@@ -1,5 +1,6 @@
 from typing import List, Tuple
 import openpyxl
+from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from cost_calculator import CostTable
@@ -12,6 +13,8 @@ class FcaSheet:
     MULTIPLIER_COLUMN = 7
     MULTVAL_COLUMN = 8
     CATEGORY_ROW_TO_CHECK_FROM = 9
+
+    fcaSheet: Worksheet
     categoryRowRanges: List[tuple]
     subTotalColumns: List[int]
 
@@ -124,10 +127,12 @@ class FcaSheet:
 
 class Fca:
     fcaSheets: List[FcaSheet]
+    filePath: str
+    fcaBook: Workbook
 
-    def __init__(self, path: str):
+    def __init__(self, path: str, data_only=False):
         self.filePath = path
-        self.fcaBook = openpyxl.load_workbook(path)
+        self.fcaBook = openpyxl.load_workbook(path, data_only=data_only)
         # self.fcaSheets = [FcaSheet(sheet) for sheet in self.fcaBook.worksheets]
         self.fcaSheets = []
         for sheet in self.fcaBook.worksheets:

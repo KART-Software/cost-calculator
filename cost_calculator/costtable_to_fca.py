@@ -31,6 +31,14 @@ def costTableToFca(costTablesDirectoryPath: str,
 
 
 class CostTableToFca:
+
+    tableMaterials: Worksheet
+    tableProesses: Worksheet
+    tableProcessMultipliers: Worksheet
+    tableFasteners: Worksheet
+    tableTooling: Worksheet
+    fca: Fca
+
     def setCostTables(self, costTablesDirectoryPath: str):
         costTableFilePaths = glob(costTablesDirectoryPath + "/*")
         costTables: List[CostTable]

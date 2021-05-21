@@ -1,5 +1,6 @@
 from enum import IntEnum
 import openpyxl
+from openpyxl.worksheet.worksheet import Worksheet
 from cost_calculator.cost import Cost, CostCategory
 
 
@@ -25,6 +26,12 @@ class CostTable:
     ]
 
     GENERIC_TERM_COLUMN = 2
+
+    costSheet: Worksheet
+    isNotCostTable: bool
+    category: CostCategory
+    baseRow: int
+    valueCollums: tuple
 
     def __init__(self, path: str):
         self.costSheet = openpyxl.load_workbook(path,
