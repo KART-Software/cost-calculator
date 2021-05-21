@@ -8,13 +8,13 @@ from cost_calculator import CostTable, Fca
 from cost_calculator.cost import CostCategory
 
 
-def costTableToFca(costTablesDirectryPath: str,
-                   fcaDirectryPath: str,
+def costTableToFca(costTablesDirectoryPath: str,
+                   fcaDirectoryPath: str,
                    deleteMode=False):
     costTableToFca = CostTableToFca()
     if deleteMode == False:
-        costTableToFca.setCostTables(costTablesDirectryPath)
-    fcaFilePaths = glob(fcaDirectryPath + "/*")
+        costTableToFca.setCostTables(costTablesDirectoryPath)
+    fcaFilePaths = glob(fcaDirectoryPath + "/*")
     for path in fcaFilePaths:
         costTableToFca.setFca(path)
         if deleteMode == True:
@@ -25,8 +25,8 @@ def costTableToFca(costTablesDirectryPath: str,
 
 
 class CostTableToFca:
-    def setCostTables(self, costTablesDirectryPath: str):
-        costTableFilePaths = glob(costTablesDirectryPath + "/*")
+    def setCostTables(self, costTablesDirectoryPath: str):
+        costTableFilePaths = glob(costTablesDirectoryPath + "/*")
         if len(costTableFilePaths) != 5:
             #error
             pass
