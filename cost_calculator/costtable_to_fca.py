@@ -115,7 +115,7 @@ class CostTable:
         "tblFasteners", "tblTooling"
     ]
 
-    GENERIC_TERM_COLUMN = 1
+    GENERIC_TERM_COLUMN = 2
 
     def __init__(self, path: str):
         self.costSheet = openpyxl.load_workbook(path,
@@ -137,56 +137,77 @@ class CostTable:
 
     def _detectBaseRowAndCollum(self):
         for i in range(1, 5):
-            if (self.costSheet[i][CostTable.GENERIC_TERM_COLUMN].value ==
+            if (self.costSheet.cell(i, CostTable.GENERIC_TERM_COLUMN).value ==
                     CostTable.GENERIC_TERM[self.category]):
                 self.baseRow = i
                 break
             if i >= 4:
                 # error
                 break
-        numbers = []
-        for j, cell in enumerate(self.costSheet[self.baseRow]):
-            if cell.value in CostTable.VALUE_NAME[self.category]:
-                numbers.append(j)
-        self.valueCollums = tuple(numbers)
+        columns = []
+        for column in range(1, self.costSheet.max_column):
+            if self.costSheet.cell(
+                    self.baseRow,
+                    column).value in CostTable.VALUE_NAME[self.category]:
+                columns.append(column)
+        self.valueCollums = tuple(columns)
 
     def getCost(self, costName: str) -> Cost:
-        for i in range(self.baseRow + 1, self.costSheet.max_row + 1):
-            if self.costSheet[i][CostTable.GENERIC_TERM_COLUMN].value == None:
+        for row in range(self.baseRow + 1, self.costSheet.max_row + 1):
+            if self.costSheet.cell(
+                    row, CostTable.GENERIC_TERM_COLUMN).value == None:
                 # error
                 break
-            if self.costSheet[i][
-                    CostTable.GENERIC_TERM_COLUMN].value == costName:
-                for j in self.valueCollums:
-                    if (type(self.costSheet[i][j].value) == float
-                            or type(self.costSheet[i][j].value) == int):
-                        return Cost(float(self.costSheet[i][j].value))
+            if self.costSheet.cell(
+                    row, CostTable.GENERIC_TERM_COLUMN).value == costName:
+                for column in self.valueCollums:
+                    if (type(self.costSheet.cell(row, column).value) == float
+                            or type(self.costSheet.cell(row,
+                                                        column).value) == int):
+                        return Cost(
+                            float(self.costSheet.cell(row, column).value))
 
 
 class FcaSheet:
-    CATEGORY_COLUMN = 1
-    UNIT_COST_COLUMN = 3
-    MULTIPLIER_COLUMN = 6
-    MULTVAL_COLUMN = 7
+    CATEGORY_COLUMN = 2
+    UNIT_COST_COLUMN = 4
+    MULTIPLIER_COLUMN = 7
+    MULTVAL_COLUMN = 8
+    CATEGORY_ROW_TO_CHECK_FROM = 9
+    categoryRows: List[int]
+    subTotalColumns: List[int]
 
     def __init__(self, fcaSheet: Worksheet):
         self.fcaSheet = fcaSheet
         self._detectCategoryRows()
+        self._detectSubTotalColumn()
 
     def _detectCategoryRows(self):
-        self.categoryRows = {}
-        row = 9
+        self.categoryRows = list(range(5))
+        self.categoryRows[CostCategory.ProcessMultiplier] = None
+        row = FcaSheet.CATEGORY_ROW_TO_CHECK_FROM
         for category in CostCategory:
-            if category == CostCategory.ProcessMultiplier:
-                continue
-            while True:
-                if self.fcaSheet[row][
-                        FcaSheet.
-                        CATEGORY_COLUMN].value == category.categoryName:
-                    self.categoryRows[category] = row
+            if category != CostCategory.ProcessMultiplier:
+                while True:
+                    if self.fcaSheet.cell(row, FcaSheet.CATEGORY_COLUMN
+                                          ).value == category.categoryName:
+                        self.categoryRows[category] = row
+                        row += 1
+                        break
                     row += 1
-                    break
-                row += 1
+
+    def _detectSubTotalColumn(self):
+        self.subTotalColumns = list(range(5))
+        self.subTotalColumns[CostCategory.ProcessMultiplier] = None
+        for category in CostCategory:
+            if category != CostCategory.ProcessMultiplier:
+                for column in range(1, self.fcaSheet.max_column + 1):
+                    if self.fcaSheet.cell(self.categoryRows[category],
+                                          column).value == "Sub Total":
+                        self.subTotalColumns[category] = column
+                        column += 1
+                        break
+                    column += 1
 
     def enterCost(self, category: CostCategory, costTable: CostTable):
         if category == CostCategory.Process:
@@ -194,18 +215,18 @@ class FcaSheet:
             pass
         row = self.categoryRows[category] + 1
         while True:
-            if (self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == None):
+            if (self.fcaSheet.cell(row,
+                                   FcaSheet.CATEGORY_COLUMN).value == None):
                 break
-            if (self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == "None"):
-                self.fcaSheet.cell(row=row,
-                                   column=FcaSheet.UNIT_COST_COLUMN + 1,
-                                   value=0)
+            if (self.fcaSheet.cell(row,
+                                   FcaSheet.CATEGORY_COLUMN).value == "None"):
+                self.fcaSheet.cell(row, FcaSheet.UNIT_COST_COLUMN, value=0)
                 break
-            self.fcaSheet.cell(
-                row=row,
-                column=FcaSheet.UNIT_COST_COLUMN + 1,
-                value=costTable.getCost(
-                    self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value))
+            self.fcaSheet.cell(row,
+                               FcaSheet.UNIT_COST_COLUMN,
+                               value=costTable.getCost(
+                                   self.fcaSheet.cell(
+                                       row, FcaSheet.CATEGORY_COLUMN).value))
             row += 1
 
     def enterProcessCost(self, tableProcesses: CostTable,
@@ -213,20 +234,20 @@ class FcaSheet:
 
         row = self.categoryRows[CostCategory.Process] + 1
         while True:
-            if (self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == None):
+            if (self.fcaSheet.cell(row,
+                                   FcaSheet.CATEGORY_COLUMN).value == None):
                 break
             cost = tableProcesses.getCost(
-                self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value)
-            self.fcaSheet.cell(row=row,
-                               column=FcaSheet.UNIT_COST_COLUMN + 1,
-                               value=cost)
-            if self.fcaSheet[row][FcaSheet.MULTIPLIER_COLUMN].value == None:
+                self.fcaSheet.cell(row, FcaSheet.CATEGORY_COLUMN).value)
+            self.fcaSheet.cell(row, FcaSheet.UNIT_COST_COLUMN, value=cost)
+            if self.fcaSheet.cell(row,
+                                  FcaSheet.MULTIPLIER_COLUMN).value == None:
                 multiplier = Cost(1.0)
             else:
                 multiplier = tableProcessMultipliers.getCost(
-                    self.fcaSheet[row][FcaSheet.MULTIPLIER_COLUMN].value)
-                self.fcaSheet.cell(row=row,
-                                   column=FcaSheet.MULTVAL_COLUMN + 1,
+                    self.fcaSheet.cell(row, FcaSheet.MULTIPLIER_COLUMN).value)
+                self.fcaSheet.cell(row,
+                                   FcaSheet.MULTVAL_COLUMN,
                                    value=multiplier)
             row += 1
 
@@ -236,24 +257,20 @@ class FcaSheet:
             pass
         row = self.categoryRows[category] + 1
         while True:
-            if (self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == None):
+            if (self.fcaSheet.cell(row,
+                                   FcaSheet.CATEGORY_COLUMN).value == None):
                 break
-            self.fcaSheet.cell(row=row,
-                               column=FcaSheet.UNIT_COST_COLUMN + 1,
-                               value="")
+            self.fcaSheet.cell(row, FcaSheet.UNIT_COST_COLUMN, value="")
             row += 1
 
     def deleteProcessCost(self):
         row = self.categoryRows[CostCategory.Process] + 1
         while True:
-            if (self.fcaSheet[row][FcaSheet.CATEGORY_COLUMN].value == None):
+            if (self.fcaSheet.cell(row,
+                                   FcaSheet.CATEGORY_COLUMN).value == None):
                 break
-            self.fcaSheet.cell(row=row,
-                               column=FcaSheet.UNIT_COST_COLUMN + 1,
-                               value="")
-            self.fcaSheet.cell(row=row,
-                               column=FcaSheet.MULTVAL_COLUMN + 1,
-                               value="")
+            self.fcaSheet.cell(row, FcaSheet.UNIT_COST_COLUMN, value="")
+            self.fcaSheet.cell(row, FcaSheet.MULTVAL_COLUMN, value="")
             row += 1
 
 
