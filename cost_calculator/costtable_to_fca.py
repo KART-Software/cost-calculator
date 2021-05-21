@@ -14,7 +14,10 @@ def costTableToFca(costTablesDirectoryPath: str,
     costTableToFca = CostTableToFca()
     if deleteMode == False:
         costTableToFca.setCostTables(costTablesDirectoryPath)
-    fcaFilePaths = glob(fcaDirectoryPath + "/*")
+    fcaFilePaths = glob(fcaDirectoryPath + "/*.xlsx")
+    fcaFilePaths.extend(glob(fcaDirectoryPath + "/*/*.xlsx"))
+    fcaFilePaths.extend(glob(fcaDirectoryPath + "/*/*/*.xlsx"))
+
     for path in fcaFilePaths:
         costTableToFca.setFca(path)
         if deleteMode == True:
@@ -27,11 +30,20 @@ def costTableToFca(costTablesDirectoryPath: str,
 class CostTableToFca:
     def setCostTables(self, costTablesDirectoryPath: str):
         costTableFilePaths = glob(costTablesDirectoryPath + "/*")
-        if len(costTableFilePaths) != 5:
+        costTables: List[CostTable]
+        costTables = []
+        for path in costTableFilePaths:
+            costTable = CostTable(path)
+            if costTable.isNotCostTable == False:
+                costTables.append(costTable)
+        # costTables = [
+        #     CostTable(path) for path in costTableFilePaths
+        #     if CostTable(path).isNotCostTable == False
+        # ]
+        categoryOfTables = [table.category for table in costTables]
+        if len(categoryOfTables) != 5:
             #error
             pass
-        costTables = [CostTable(path) for path in costTableFilePaths]
-        categoryOfTables = [table.category for table in costTables]
         for i in range(5):
             for j in range(5):
                 if i != j and categoryOfTables[i] == categoryOfTables[j]:

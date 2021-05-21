@@ -2,6 +2,7 @@ from enum import IntEnum
 import openpyxl
 from cost_calculator.cost import Cost, CostCategory
 
+
 class CostTable:
     # GENERICTERM_VALUENAME_SHEETTITLE = {
     #     CostCategory.Material:
@@ -29,19 +30,18 @@ class CostTable:
         self.costSheet = openpyxl.load_workbook(path,
                                                 data_only=True).worksheets[0]
         self._detectCategory()
-        self._detectBaseRowAndCollum()
+        if self.isNotCostTable == False:
+            self._detectBaseRowAndCollum()
 
     def _detectCategory(self):
-        isNotCostTable = True
+        self.isNotCostTable = True
         for category in CostCategory:
             if self.costSheet.title == CostTable.SHEET_TITLE[category]:
                 self.category = category
+                self.isNotCostTable = False
                 break
-            isNotCostTable = isNotCostTable and self.costSheet.title != CostTable.SHEET_TITLE[
+            self.isNotCostTable = self.isNotCostTable and self.costSheet.title != CostTable.SHEET_TITLE[
                 category]
-        if isNotCostTable == True:
-            #error
-            pass
 
     def _detectBaseRowAndCollum(self):
         for i in range(1, 5):
