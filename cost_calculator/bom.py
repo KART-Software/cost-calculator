@@ -2,6 +2,7 @@ from cost_calculator.fca import FcaSheet
 from typing import List
 from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
+from os.path import relpath
 
 from cost_calculator import FcaSheet
 from cost_calculator.categories import CostCategory, SystemAssemblyCategory
@@ -9,11 +10,13 @@ import openpyxl
 
 
 class BomSheet:
+    filePath: str
     bomBook: Workbook
     bomSheet: Worksheet
     isNotBomSheet: bool
     baseRow: int
     costColumns: List[int]
+    asmPrtColumn: int
     componentColumn: int
     quantityColumn: int
     systemAssemblyRowRanges: List[tuple]
@@ -23,21 +26,23 @@ class BomSheet:
         self.bomBook = openpyxl.load_workbook(path)
         self.bomSheet = self.bomBook.worksheets[1]
         self._detectBaseRowAndColumns()
-        self._detectSystemAssemblyRowRanges()
+        if self.isNotBomSheet == False:
+            self._detectSystemAssemblyRowRanges()
 
     def _detectBaseRowAndColumns(self):
+        self.isNotBomSheet = True
         for row in range(1, 10):
             if self.bomSheet.cell(row, 1).value == 1:
                 if self.bomSheet.cell(row + 1, 1).value == 2:
                     self.baseRow = row - 1
+                    self.isNotBomSheet = False
                     break
-            if row >= 9:
-                self.isNotBomSheet = True
-                #error
 
         self.costColumns = [None, None, None, None, None]
         for column in range(1, self.bomSheet.max_column + 1):
             cellValue = self.bomSheet.cell(self.baseRow, column).value
+            if cellValue == "Asm/Prt #":
+                self.asmPrtColumn = column
             if cellValue == "Component":
                 self.componentColumn = column
             if cellValue == "Quantity":
@@ -71,20 +76,28 @@ class BomSheet:
             fcaSheet.systemAssemblyCategory]
         component = fcaSheet.fcaSheet.title
         for row in range(rowRange[0], rowRange[1] + 1):
-            if self.bomSheet.cell(row, self.componentColumn) == component:
+            if self.bomSheet.cell(row,
+                                  self.componentColumn).value == component:
                 self.bomSheet.cell(row,
                                    self.quantityColumn,
-                                   value=fcaSheet.fcaSheet.cell(
-                                       fcaSheet.QUANTITY_CELL[0],
-                                       fcaSheet.QUANTITY_CELL[1]))
+                                   value=fcaSheet.getQuantity())
                 for category in CostCategory:
                     if category != CostCategory.ProcessMultiplier:
                         self.bomSheet.cell(
                             row,
                             self.costColumns[category],
-                            value=fcaSheet.fcaSheet.cell(
-                                fcaSheet.categoryRowRanges[1] + 1,
-                                fcaSheet.subTotalColumns[category]))
-                # self.bomSheet.cell(row, self.componentColumn,value=fcaSheet.fcaSheet.cell(fcaSheet.))
+                            value=fcaSheet.getSubTotal(category))
+                linkToFcaSheet = relpath(fcaSheet.fcaFilePath,
+                                         self.filePath + "/..")
+                linkName = str(
+                    self.bomSheet.cell(row, self.asmPrtColumn).value)
+                hyperLink = "=HYPERLINK(\"[" + linkToFcaSheet + "]\'" + component + "\'!A1\",\"" + linkName + "\")"
+                self.bomSheet.cell(row,
+                                   self.linkToFcaSheetColumn,
+                                   value=hyperLink)
 
-    # def save(se)
+    # def deleteData(self):
+    #     for category in SystemAssemblyCategory:
+
+    def save(self):
+        self.bomBook.save(self.filePath)

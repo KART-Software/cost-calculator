@@ -21,9 +21,9 @@ class FcaSheet:
     subTotalColumns: List[int]
     systemAssemblyCategory: SystemAssemblyCategory
     isNotFcaSheet: bool
+    fcaFilePath: str
 
     def __init__(self, fcaSheet: Worksheet):
-        # self.parent = fcaSheet.parent
         self.fcaSheet = fcaSheet
         self._detectSystemAssemblyCategory()
         if self.isNotFcaSheet == False:
@@ -69,6 +69,9 @@ class FcaSheet:
                         column += 1
                         break
                     column += 1
+
+    def putfcaFilePath(self, fcaFilePath):
+        self.fcaFilePath = fcaFilePath
 
     def enterCost(self, category: CostCategory, costTable: CostTable):
         if category == CostCategory.Process:
@@ -141,6 +144,14 @@ class FcaSheet:
             self.fcaSheet.cell(row, FcaSheet.MULTVAL_COLUMN, value="")
             row += 1
 
+    def getQuantity(self) -> int:
+        return self.fcaSheet.cell(self.QUANTITY_CELL[0], self.QUANTITY_CELL[1])
+
+    def getSubTotal(self, category: CostCategory) -> Cost:
+        cellvalue = self.fcaSheet.cell(self.categoryRowRanges[category][1] + 1,
+                                       self.subTotalColumns[category]).value
+        return Cost(float(cellvalue))
+
 
 class Fca:
     fcaSheets: List[FcaSheet]
@@ -155,4 +166,5 @@ class Fca:
         for sheet in self.fcaBook.worksheets:
             fcaSheet = FcaSheet(sheet)
             if fcaSheet.isNotFcaSheet == False:
+                fcaSheet.putfcaFilePath(self.filePath)
                 self.fcaSheets.append(fcaSheet)
