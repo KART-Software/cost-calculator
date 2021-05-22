@@ -34,7 +34,7 @@ class FcaSheet:
             FcaSheet.SYSTEM_ASSEMBLY_CATEGORY_CELL[0],
             FcaSheet.SYSTEM_ASSEMBLY_CATEGORY_CELL[1]).value
         for category in SystemAssemblyCategory:
-            if cellValue == category.categoryName:
+            if cellValue in category.categoryName:
                 self.systemAssemblyCategory = category
                 self.isNotFcaSheet = False
 

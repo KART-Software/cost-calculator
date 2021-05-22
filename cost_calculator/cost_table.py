@@ -1,7 +1,7 @@
 from enum import IntEnum
 import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
-from cost_calculator.cost import Cost, CostCategory
+from cost_calculator.categories import Cost, CostCategory
 
 
 class CostTable:

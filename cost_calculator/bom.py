@@ -11,8 +11,10 @@ import openpyxl
 class BomSheet:
     bomBook: Workbook
     bomSheet: Worksheet
-    isNotBom: bool
+    isNotBomSheet: bool
     costColumns: List[int]
+    componentColumn: int
+    quantityColumn: int
     systemAssemblyRowRanges: List[tuple]
 
     def __init__(self, path: str):
@@ -29,12 +31,14 @@ class BomSheet:
                     self.baseRow = row - 1
                     break
             if row >= 9:
-                self.isNotBom = True
+                self.isNotBomSheet = True
                 #error
 
         self.costColumns = [None, None, None, None, None]
         for column in range(1, self.bomSheet.max_column + 1):
             cellValue = self.bomSheet.cell(self.baseRow, column).value
+            if cellValue == "Component":
+                self.componentColumn = column
             if cellValue == "Quantity":
                 self.quantityColumn = column
             if cellValue == CostCategory.Material.categoryName + " Cost":
@@ -54,12 +58,26 @@ class BomSheet:
             if self.bomSheet.cell(row, 1).value == None:
                 for category in SystemAssemblyCategory:
                     if self.bomSheet.cell(row,
-                                          2).value == category.categoryName:
+                                          2).value in category.categoryName:
                         endRow = row - 1
                         self.systemAssemblyRowRanges[category] = (startRow,
                                                                   endRow)
                         startRow = row + 1
                         break
 
-    # def enterCost(self, fcaSheet: FcaSheet):
-    #     self.
+    def enterCost(self, fcaSheet: FcaSheet):
+        rowRange = self.systemAssemblyRowRanges[
+            fcaSheet.systemAssemblyCategory]
+        component = fcaSheet.fcaSheet.title
+        for row in range(rowRange[0], rowRange[1] + 1):
+            if self.bomSheet.cell(row, self.componentColumn) == component:
+                for category in CostCategory:
+                    if category != CostCategory.ProcessMultiplier:
+                        self.bomSheet.cell(
+                            row,
+                            self.costColumns[category],
+                            value=fcaSheet.fcaSheet.cell(
+                                fcaSheet.categoryRowRanges[1] + 1,
+                                fcaSheet.subTotalColumns[category]))
+
+    # def save(se)

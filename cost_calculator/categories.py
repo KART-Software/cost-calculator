@@ -40,11 +40,13 @@ class SystemAssemblyCategory(IntEnum):
     Wheels_WheelBearingsAndTires = 7
 
     @property
-    def categoryName(self) -> str:
-        CATEGORY_NAMES = [
-            "Brake System", "Engine & Drivetrain", "Frame & Body",
-            "Electrical", "Miscellaneous, Finish & Assembly",
-            "Steering System", "Suspension System",
-            "Wheels, Wheel Bearings and Tires"
-        ]
+    def categoryName(self) -> tuple:
+        CATEGORY_NAMES = [("Brake System", ),
+                          ("Engine & Drivetrain", "Engine and Drivetrain"),
+                          ("Frame & Body", "Frame and Body"), ("Electrical", ),
+                          ("Miscellaneous, Finish & Assembly",
+                           "Miscellaneous, Finish and Assembly"),
+                          ("Steering System", ), ("Suspension System", ),
+                          ("Wheels, Wheel Bearings & Tires",
+                           "Wheels, Wheel Bearings and Tires")]
         return CATEGORY_NAMES[self]

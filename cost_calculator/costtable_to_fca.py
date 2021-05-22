@@ -5,7 +5,7 @@ from glob import glob
 from openpyxl.worksheet.worksheet import Worksheet
 
 from cost_calculator import CostTable, Fca
-from cost_calculator.cost import CostCategory
+from cost_calculator.categories import CostCategory
 
 
 def costTableToFca(costTablesDirectoryPath: str,
