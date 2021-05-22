@@ -4,7 +4,7 @@ from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from cost_calculator import CostTable
-from cost_calculator.cost import Cost, CostCategory
+from cost_calculator.categories import Cost, CostCategory, SystemAssemblyCategory
 
 
 class FcaSheet:
@@ -13,15 +13,30 @@ class FcaSheet:
     MULTIPLIER_COLUMN = 7
     MULTVAL_COLUMN = 8
     CATEGORY_ROW_TO_CHECK_FROM = 9
+    SYSTEM_ASSEMBLY_CATEGORY_CELL = (2, 2)
 
     fcaSheet: Worksheet
     categoryRowRanges: List[tuple]
     subTotalColumns: List[int]
+    systemAssemblyCategory: SystemAssemblyCategory
+    isNotFcaSheet: bool
 
     def __init__(self, fcaSheet: Worksheet):
         self.fcaSheet = fcaSheet
-        self._detectCategoryRowRanges()
-        self._detectSubTotalColumns()
+        self._detectSystemAssemblyCategory()
+        if self.isNotFcaSheet == False:
+            self._detectCategoryRowRanges()
+            self._detectSubTotalColumns()
+
+    def _detectSystemAssemblyCategory(self):
+        self.isNotFcaSheet = True
+        cellValue = self.fcaSheet.cell(
+            FcaSheet.SYSTEM_ASSEMBLY_CATEGORY_CELL[0],
+            FcaSheet.SYSTEM_ASSEMBLY_CATEGORY_CELL[1]).value
+        for category in SystemAssemblyCategory:
+            if cellValue == category.categoryName:
+                self.systemAssemblyCategory = category
+                self.isNotFcaSheet = False
 
     def _detectCategoryRowRanges(self):
         category: CostCategory
@@ -136,5 +151,6 @@ class Fca:
         # self.fcaSheets = [FcaSheet(sheet) for sheet in self.fcaBook.worksheets]
         self.fcaSheets = []
         for sheet in self.fcaBook.worksheets:
-            if sheet["A1"].value == "University":
-                self.fcaSheets.append(FcaSheet(sheet))
+            fcaSheet = FcaSheet(sheet)
+            if fcaSheet.isNotFcaSheet == False:
+                self.fcaSheets.append(fcaSheet)
