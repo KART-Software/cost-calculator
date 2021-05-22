@@ -145,7 +145,8 @@ class FcaSheet:
             row += 1
 
     def getQuantity(self) -> int:
-        return self.fcaSheet.cell(self.QUANTITY_CELL[0], self.QUANTITY_CELL[1])
+        return self.fcaSheet.cell(self.QUANTITY_CELL[0],
+                                  self.QUANTITY_CELL[1]).value
 
     def getSubTotal(self, category: CostCategory) -> Cost:
         cellvalue = self.fcaSheet.cell(self.categoryRowRanges[category][1] + 1,
