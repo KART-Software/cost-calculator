@@ -12,6 +12,7 @@ class BomSheet:
     bomBook: Workbook
     bomSheet: Worksheet
     isNotBomSheet: bool
+    baseRow: int
     costColumns: List[int]
     componentColumn: int
     quantityColumn: int
@@ -65,12 +66,17 @@ class BomSheet:
                         startRow = row + 1
                         break
 
-    def enterCost(self, fcaSheet: FcaSheet):
+    def enterData(self, fcaSheet: FcaSheet):
         rowRange = self.systemAssemblyRowRanges[
             fcaSheet.systemAssemblyCategory]
         component = fcaSheet.fcaSheet.title
         for row in range(rowRange[0], rowRange[1] + 1):
             if self.bomSheet.cell(row, self.componentColumn) == component:
+                self.bomSheet.cell(row,
+                                   self.quantityColumn,
+                                   value=fcaSheet.fcaSheet.cell(
+                                       fcaSheet.QUANTITY_CELL[0],
+                                       fcaSheet.QUANTITY_CELL[1]))
                 for category in CostCategory:
                     if category != CostCategory.ProcessMultiplier:
                         self.bomSheet.cell(
@@ -79,5 +85,6 @@ class BomSheet:
                             value=fcaSheet.fcaSheet.cell(
                                 fcaSheet.categoryRowRanges[1] + 1,
                                 fcaSheet.subTotalColumns[category]))
+                # self.bomSheet.cell(row, self.componentColumn,value=fcaSheet.fcaSheet.cell(fcaSheet.))
 
     # def save(se)

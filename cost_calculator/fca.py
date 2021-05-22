@@ -14,6 +14,7 @@ class FcaSheet:
     MULTVAL_COLUMN = 8
     CATEGORY_ROW_TO_CHECK_FROM = 9
     SYSTEM_ASSEMBLY_CATEGORY_CELL = (2, 2)
+    QUANTITY_CELL = (2, 14)
 
     fcaSheet: Worksheet
     categoryRowRanges: List[tuple]
@@ -22,6 +23,7 @@ class FcaSheet:
     isNotFcaSheet: bool
 
     def __init__(self, fcaSheet: Worksheet):
+        # self.parent = fcaSheet.parent
         self.fcaSheet = fcaSheet
         self._detectSystemAssemblyCategory()
         if self.isNotFcaSheet == False:
