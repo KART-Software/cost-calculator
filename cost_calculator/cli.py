@@ -1,5 +1,5 @@
 import argparse
-from cost_calculator import costTableToFca
+from cost_calculator import costTableToFca, fcaToBom
 from typing import List, Optional
 
 
@@ -15,15 +15,13 @@ def _perform_args(args: argparse.Namespace) -> None:
         costTableDirectoryPath = args.costtable_to_fca[0]
         fcaDirectoryPath = args.costtable_to_fca[1]
         costTableToFca(costTableDirectoryPath, fcaDirectoryPath)
+    if args.fca_to_bom:
+        fcaDirectoryPath = args.fca_to_bom[0]
+        bomFilePath = args.fca_to_bom[1]
+        fcaToBom(fcaDirectoryPath, bomFilePath)
 
 
 def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
-    # parser.add_argument(
-    #     "Path of directory containing 5 Cost Table files",
-    #     "Path of directory containing FCA files",
-    #     help="The FCA files' path, Cost Table file's path",
-    #     nargs="?",
-    # )
     parser.add_argument(
         "-ctf",
         "--costtable-to-fca",
