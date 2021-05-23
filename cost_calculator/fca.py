@@ -144,13 +144,15 @@ class FcaSheet:
             self.fcaSheet.cell(row, FcaSheet.MULTVAL_COLUMN, value="")
             row += 1
 
-    def getQuantity(self) -> int:
+    def getQuantity(self):
         return self.fcaSheet.cell(self.QUANTITY_CELL[0],
                                   self.QUANTITY_CELL[1]).value
 
     def getSubTotal(self, category: CostCategory) -> Cost:
         cellvalue = self.fcaSheet.cell(self.categoryRowRanges[category][1] + 1,
                                        self.subTotalColumns[category]).value
+        if type(cellvalue) != int and type(cellvalue) != float:
+            return None
         return Cost(float(cellvalue))
 
 

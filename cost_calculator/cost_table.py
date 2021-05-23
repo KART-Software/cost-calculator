@@ -74,7 +74,8 @@ class CostTable:
                 # error
                 break
             if self.costSheet.cell(
-                    row, CostTable.GENERIC_TERM_COLUMN).value == costName:
+                    row, CostTable.GENERIC_TERM_COLUMN).value.replace(
+                        " ", "").lower() == costName.replace(" ", "").lower():
                 for column in self.valueCollums:
                     if (type(self.costSheet.cell(row, column).value) == float
                             or type(self.costSheet.cell(row,

@@ -19,6 +19,7 @@ class BomSheet:
     asmPrtColumn: int
     componentColumn: int
     quantityColumn: int
+    linkToFcaSheetColumn: int
     systemAssemblyRowRanges: List[tuple]
 
     def __init__(self, path: str):
@@ -76,8 +77,8 @@ class BomSheet:
             fcaSheet.systemAssemblyCategory]
         component = fcaSheet.fcaSheet.title
         for row in range(rowRange[0], rowRange[1] + 1):
-            if self.bomSheet.cell(row,
-                                  self.componentColumn).value == component:
+            if self.bomSheet.cell(row, self.componentColumn).value.replace(
+                    " ", "").lower() == component.replace(" ", "").lower():
                 self.bomSheet.cell(row,
                                    self.quantityColumn,
                                    value=fcaSheet.getQuantity())
