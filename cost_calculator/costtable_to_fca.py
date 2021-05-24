@@ -13,18 +13,19 @@ def costTableToFca(costTablesDirectoryPath: str,
                    deleteMode=False):
     costTableToFca = CostTableToFca()
     if deleteMode == False:
-        costTableToFca.setCostTables(costTablesDirectoryPath)
+        if costTableToFca.setCostTables(costTablesDirectoryPath):
+            pass
     fcaFilePaths = glob(fcaDirectoryPath + "/*.xlsx")
     fcaFilePaths.extend(glob(fcaDirectoryPath + "/*/*.xlsx"))
     fcaFilePaths.extend(glob(fcaDirectoryPath + "/*/*/*.xlsx"))
 
     for path in fcaFilePaths:
-        costTableToFca.setFca(path)
-        if deleteMode == True:
-            costTableToFca.deleteCost()
-        else:
-            costTableToFca.start()
-        costTableToFca.save()
+        if costTableToFca.setFca(path):
+            if deleteMode == True:
+                costTableToFca.deleteCost()
+            else:
+                costTableToFca.start()
+            costTableToFca.save()
 
 
 class CostTableToFca:
@@ -36,7 +37,7 @@ class CostTableToFca:
     tableTooling: Worksheet
     fca: Fca
 
-    def setCostTables(self, costTablesDirectoryPath: str):
+    def setCostTables(self, costTablesDirectoryPath: str) -> bool:
         costTableFilePaths = glob(costTablesDirectoryPath + "/*")
         costTables: List[CostTable]
         costTables = []
@@ -50,13 +51,11 @@ class CostTableToFca:
         # ]
         categoryOfTables = [table.category for table in costTables]
         if len(categoryOfTables) != 5:
-            #error
-            pass
+            return False
         for i in range(5):
             for j in range(5):
                 if i != j and categoryOfTables[i] == categoryOfTables[j]:
-                    #error
-                    pass
+                    return False
         costTablesSorted: List[CostTable]
         costTablesSorted = list(range(5))
         for i in range(5):
@@ -68,9 +67,11 @@ class CostTableToFca:
         self.tableTooling = costTablesSorted[4]
         #self.tableMaterials = next(filter(lambda x : x.category == CostCategory.Material, costTables), None)
         #elm = next(filter(lambda x: x.endswith("n"), fruits), None)
+        return True
 
-    def setFca(self, path: str):
+    def setFca(self, path: str) -> bool:
         self.fca = Fca(path)
+        return self.fca.isFca
 
     def start(self):
         for sheet in self.fca.fcaSheets:
