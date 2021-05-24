@@ -14,10 +14,6 @@ def fcaToBom(fcaDirectoryPath: str, bomFilePath: str):
     fcaToBom.save()
 
 
-# def deleteBomValues(bomFilePath: str):
-#     bomSheet = BomSheet(bomFilePath)
-
-
 class FcaToBom:
     fca: Fca
     bomSheet: BomSheet

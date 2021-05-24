@@ -8,8 +8,9 @@ from pdfminer.pdfpage import PDFPage
 class SupplPdf:
     STRINGS_MUST_INCLUDED = ["SOLIDWORKS", "裏付け資料"]
 
-    boxesInPages: List[List[LTTextBox]]
+    filePath: str
     isSupplPDF: bool
+    boxesInPages: List[List[LTTextBox]]
 
     def __init__(self, path: str):
         self.filePath = path

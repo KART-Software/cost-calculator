@@ -1,6 +1,6 @@
 from glob import glob
 from os.path import relpath
-from typing import List, Tuple
+from typing import List
 import openpyxl
 from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
@@ -8,6 +8,17 @@ from openpyxl.worksheet.worksheet import Worksheet
 from cost_calculator import CostTable
 from cost_calculator.categories import Cost, CostCategory, SystemAssemblyCategory
 from cost_calculator.supplement import SupplPdf
+
+
+def pdfTofca(fcaDirectoryPath):
+
+    fcaFilePaths = glob(fcaDirectoryPath + "/*.xlsx")
+    fcaFilePaths.extend(glob(fcaDirectoryPath + "/*/*.xlsx"))
+    fcaFilePaths.extend(glob(fcaDirectoryPath + "/*/*/*.xlsx"))
+    for path in fcaFilePaths:
+        fca = Fca(path)
+        fca.enterLinkToSuppleent()
+        fca.save()
 
 
 class FcaSheet:
@@ -201,10 +212,16 @@ class Fca:
     def __init__(self, path: str, data_only=False):
         self.filePath = path
         self.fcaBook = openpyxl.load_workbook(path, data_only=data_only)
-        # self.fcaSheets = [FcaSheet(sheet) for sheet in self.fcaBook.worksheets]
         self.fcaSheets = []
         for sheet in self.fcaBook.worksheets:
             fcaSheet = FcaSheet(sheet)
             if fcaSheet.isNotFcaSheet == False:
                 fcaSheet.putfcaFilePath(self.filePath)
                 self.fcaSheets.append(fcaSheet)
+
+    def enterLinkToSuppleent(self):
+        for sheet in self.fcaSheets:
+            sheet.enterLinkToSupplement()
+
+    def save(self):
+        self.fcaBook.save(self.filePath)

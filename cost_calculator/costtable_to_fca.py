@@ -88,4 +88,4 @@ class CostTableToFca:
             sheet.deleteCost(CostCategory.Tooling)
 
     def save(self):
-        self.fca.fcaBook.save(self.fca.filePath)
+        self.fca.save()
