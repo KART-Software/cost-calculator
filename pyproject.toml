@@ -6,7 +6,8 @@ authors = ["ORyomei <o.ryomei1020@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8.0"
-openpyxl = "*"
+openpyxl = "3.0.7"
+"pdfminer.six" = "^20201018"
 
 [tool.poetry.dev-dependencies]
 yapf = "0.30.0"

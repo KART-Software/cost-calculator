@@ -1,3 +1,4 @@
+__version__ = "0.1.0"
 __title__ = "cost_calculator"
 
 from cost_calculator.cost_table import CostTable

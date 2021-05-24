@@ -1,3 +1,5 @@
+from glob import glob
+from os.path import relpath
 from typing import List, Tuple
 import openpyxl
 from openpyxl.workbook.workbook import Workbook
@@ -5,6 +7,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from cost_calculator import CostTable
 from cost_calculator.categories import Cost, CostCategory, SystemAssemblyCategory
+from cost_calculator.supplement import SupplPdf
 
 
 class FcaSheet:
@@ -13,12 +16,15 @@ class FcaSheet:
     MULTIPLIER_COLUMN = 7
     MULTVAL_COLUMN = 8
     CATEGORY_ROW_TO_CHECK_FROM = 9
+    ID_COLUMN = 2
     SYSTEM_ASSEMBLY_CATEGORY_CELL = (2, 2)
     QUANTITY_CELL = (2, 14)
+    FILE_LINK_CELL = (3, 11)
 
     fcaSheet: Worksheet
     categoryRowRanges: List[tuple]
     subTotalColumns: List[int]
+    idRow: int
     systemAssemblyCategory: SystemAssemblyCategory
     isNotFcaSheet: bool
     fcaFilePath: str
@@ -29,6 +35,7 @@ class FcaSheet:
         if self.isNotFcaSheet == False:
             self._detectCategoryRowRanges()
             self._detectSubTotalColumns()
+            self._detectIdRow()
 
     def _detectSystemAssemblyCategory(self):
         self.isNotFcaSheet = True
@@ -69,6 +76,12 @@ class FcaSheet:
                         column += 1
                         break
                     column += 1
+
+    def _detectIdRow(self):
+        for row in range(1, 10):
+            if self.fcaSheet.cell(row,
+                                  FcaSheet.ID_COLUMN - 1).value == "P/N Base":
+                self.idRow = row
 
     def putfcaFilePath(self, fcaFilePath):
         self.fcaFilePath = fcaFilePath
@@ -143,6 +156,30 @@ class FcaSheet:
             self.fcaSheet.cell(row, FcaSheet.UNIT_COST_COLUMN, value="")
             self.fcaSheet.cell(row, FcaSheet.MULTVAL_COLUMN, value="")
             row += 1
+
+    def enterLinkToSupplement(self):
+        directoryPath = relpath(self.fcaFilePath + "/..")
+        pdfPaths = glob(directoryPath + "/*.pdf")
+        pdfPaths.extend(glob(directoryPath + "/*.PDF"))
+        print(pdfPaths)
+        id = str(self.fcaSheet.cell(self.idRow, FcaSheet.ID_COLUMN).value)
+        print(id)
+        for path in pdfPaths:
+            supplPdf = SupplPdf(path)
+            if supplPdf.isSupplPDF:
+                pdfPath = path
+                page = supplPdf.pageOfId(id)
+                break
+        linkToPdf = relpath(pdfPath, directoryPath)
+        if page:
+            hyperLink = "=HYPERLINK(\"{}#page={}\",\"{}\")".format(
+                linkToPdf, page, id)
+        else:
+            hyperLink = "=HYPERLINK(\"{}\",\"{}\")".format(linkToPdf, id)
+            print(hyperLink)
+        self.fcaSheet.cell(FcaSheet.FILE_LINK_CELL[0],
+                           FcaSheet.FILE_LINK_CELL[1],
+                           value=hyperLink)
 
     def getQuantity(self):
         return self.fcaSheet.cell(self.QUANTITY_CELL[0],
