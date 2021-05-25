@@ -60,7 +60,7 @@ class CostTable:
                 # error
                 break
         columns = []
-        for column in range(1, self.costSheet.max_column):
+        for column in range(1, self.costSheet.max_column + 1):
             if self.costSheet.cell(
                     self.baseRow,
                     column).value in CostTable.VALUE_NAME[self.category]:

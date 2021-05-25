@@ -17,7 +17,7 @@ setup(
     entry_points={
         "console_scripts": ["cost_calculator = cost_calculator.cli:main"],
     },
-    python_requires=">=3.8",
+    python_requires=">=3.7",
     classifiers=[],
     diescription=("Python 3 library for Cost Calculation."),
 )

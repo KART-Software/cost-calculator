@@ -5,7 +5,7 @@ description = ""
 authors = ["ORyomei <o.ryomei1020@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.8.0"
+python = "^3.7.0"
 openpyxl = "3.0.7"
 "pdfminer.six" = "^20201018"
 

@@ -33,6 +33,8 @@ class FcaSheet:
     SYSTEM_ASSEMBLY_CATEGORY_CELL = (2, 2)
     QUANTITY_CELL = (2, 14)
     FILE_LINK_CELL = (3, 11)
+    #TODO これらのセル、行、列を自動で検知するように
+    #TODO idRow、title、isNotFcaSheet、idなどを @propertyに
 
     fcaSheet: Worksheet
     categoryRowRanges: List[tuple]
@@ -105,6 +107,7 @@ class FcaSheet:
         if category == CostCategory.Process:
             # error
             pass
+        #TODO forを使って書き直し
         row = self.categoryRowRanges[category][0] + 1
         while True:
             if (self.fcaSheet.cell(row,
@@ -124,6 +127,7 @@ class FcaSheet:
     def enterProcessCost(self, tableProcesses: CostTable,
                          tableProcessMultipliers: CostTable):
         MULTIPLIER_PREFIXES = ["", "Machine - ", "Material - "]
+        #TODO forを使って書き直し
         row = self.categoryRowRanges[CostCategory.Process][0] + 1
         while True:
             if (self.fcaSheet.cell(row,
@@ -155,6 +159,7 @@ class FcaSheet:
             # error
             pass
         row = self.categoryRowRanges[category][0] + 1
+        #TODO forを使って書き直し
         while True:
             if (self.fcaSheet.cell(row,
                                    FcaSheet.CATEGORY_COLUMN).value == None):
@@ -164,6 +169,7 @@ class FcaSheet:
 
     def deleteProcessCost(self):
         row = self.categoryRowRanges[CostCategory.Process][0] + 1
+        #TODO forを使って書き直し
         while True:
             if (self.fcaSheet.cell(row,
                                    FcaSheet.CATEGORY_COLUMN).value == None):
@@ -173,16 +179,26 @@ class FcaSheet:
             row += 1
 
     def enterLinkToSupplement(self):
-        id = str(self.fcaSheet.cell(self.idRow, FcaSheet.ID_COLUMN).value)
+        # id = str(self.fcaSheet.cell(self.idRow, FcaSheet.ID_COLUMN).value)
+        id = self.id
         directoryPath = relpath(self.fcaFilePath + "/..")
         if self.hasSupplPdf:
             linkToPdf = relpath(self.supplPdf.filePath, directoryPath)
             page = self.supplPdf.pageOfId(id)
             if page:
-                hyperLink = "=HYPERLINK(\"{}#page={}\",\"{}\")".format(
-                    linkToPdf, page, id)
+                hyperLink = "=HYPERLINK(\"{}#page={}\")".format(
+                    linkToPdf, page)
+                # hyperLink = "=HYPERLINK(\"{}#page={}\",\"{}\")".format(
+                #     linkToPdf, page, id)
+                self.fcaSheet.cell(FcaSheet.FILE_LINK_CELL[0],
+                                   FcaSheet.FILE_LINK_CELL[1] + 1,
+                                   value="Page=" + str(page))
+                print("OK!! : {} : {}".format(id, self.fcaSheet.title))
             else:
-                hyperLink = "=HYPERLINK(\"{}\",\"{}\")".format(linkToPdf, id)
+                hyperLink = "=HYPERLINK(\"{}\")".format(linkToPdf)
+                # hyperLink = "=HYPERLINK(\"{}\",\"{}\")".format(linkToPdf, id)
+                print("裏付け資料に、IDが一致するページがありません。 : {} : {}".format(
+                    id, self.fcaSheet.title))
             self.fcaSheet.cell(FcaSheet.FILE_LINK_CELL[0],
                                FcaSheet.FILE_LINK_CELL[1],
                                value=hyperLink)
@@ -197,6 +213,14 @@ class FcaSheet:
         if type(cellvalue) != int and type(cellvalue) != float:
             return None
         return Cost(float(cellvalue))
+
+    @property
+    def title(self) -> str:
+        return self.fcaSheet.title
+
+    @property
+    def id(self) -> str:
+        return str(self.fcaSheet.cell(self.idRow, FcaSheet.ID_COLUMN).value)
 
 
 class Fca:
@@ -250,6 +274,9 @@ class Fca:
             self.supplePdf = supplePdfs[0]
             self.hasSupplPdf = True
         else:
+            print("次のFCAファイルの裏付け資料が複数存在、または存在しません。\
+                    FCAファイルと同じディレクトリに１つだけ置いてください。")
+            print(self.filePath)
             self.supplePdf = None
             self.hasSupplPdf = False
 
