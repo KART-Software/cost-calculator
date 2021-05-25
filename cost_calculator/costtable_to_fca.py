@@ -38,7 +38,7 @@ class CostTableToFca:
     fca: Fca
 
     def setCostTables(self, costTablesDirectoryPath: str) -> bool:
-        costTableFilePaths = glob(costTablesDirectoryPath + "/*")
+        costTableFilePaths = glob(costTablesDirectoryPath + "/*.xlsx")
         costTables: List[CostTable]
         costTables = []
         for path in costTableFilePaths:

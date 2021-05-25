@@ -10,7 +10,7 @@ from cost_calculator.categories import Cost, CostCategory, SystemAssemblyCategor
 from cost_calculator.supplement import SupplPdf
 
 
-def pdfTofca(fcaDirectoryPath):
+def supplToFca(fcaDirectoryPath):
 
     fcaFilePaths = glob(fcaDirectoryPath + "/*.xlsx")
     fcaFilePaths.extend(glob(fcaDirectoryPath + "/*/*.xlsx"))
