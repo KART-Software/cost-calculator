@@ -16,9 +16,11 @@ def pdfTofca(fcaDirectoryPath):
     fcaFilePaths.extend(glob(fcaDirectoryPath + "/*/*.xlsx"))
     fcaFilePaths.extend(glob(fcaDirectoryPath + "/*/*/*.xlsx"))
     for path in fcaFilePaths:
-        fca = Fca(path)
-        fca.enterLinkToSuppleent()
-        fca.save()
+        fca = Fca(path, parseSupplPdf=True)
+        if fca.isFca:
+            if fca.hasSupplPdf:
+                fca.enterLinkToSuppleent()
+                fca.save()
 
 
 class FcaSheet:
@@ -94,8 +96,10 @@ class FcaSheet:
                                   FcaSheet.ID_COLUMN - 1).value == "P/N Base":
                 self.idRow = row
 
-    def putfcaFilePath(self, fcaFilePath):
+    def putFcaData(self, fcaFilePath, supplPdf: SupplPdf, hasSupplPdf: bool):
         self.fcaFilePath = fcaFilePath
+        self.supplPdf = supplPdf
+        self.hasSupplPdf = hasSupplPdf
 
     def enterCost(self, category: CostCategory, costTable: CostTable):
         if category == CostCategory.Process:
@@ -169,28 +173,19 @@ class FcaSheet:
             row += 1
 
     def enterLinkToSupplement(self):
-        directoryPath = relpath(self.fcaFilePath + "/..")
-        pdfPaths = glob(directoryPath + "/*.pdf")
-        pdfPaths.extend(glob(directoryPath + "/*.PDF"))
-        print(pdfPaths)
         id = str(self.fcaSheet.cell(self.idRow, FcaSheet.ID_COLUMN).value)
-        print(id)
-        for path in pdfPaths:
-            supplPdf = SupplPdf(path)
-            if supplPdf.isSupplPDF:
-                pdfPath = path
-                page = supplPdf.pageOfId(id)
-                break
-        linkToPdf = relpath(pdfPath, directoryPath)
-        if page:
-            hyperLink = "=HYPERLINK(\"{}#page={}\",\"{}\")".format(
-                linkToPdf, page, id)
-        else:
-            hyperLink = "=HYPERLINK(\"{}\",\"{}\")".format(linkToPdf, id)
-            print(hyperLink)
-        self.fcaSheet.cell(FcaSheet.FILE_LINK_CELL[0],
-                           FcaSheet.FILE_LINK_CELL[1],
-                           value=hyperLink)
+        directoryPath = relpath(self.fcaFilePath + "/..")
+        if self.hasSupplPdf:
+            linkToPdf = relpath(self.supplPdf.filePath, directoryPath)
+            page = self.supplPdf.pageOfId(id)
+            if page:
+                hyperLink = "=HYPERLINK(\"{}#page={}\",\"{}\")".format(
+                    linkToPdf, page, id)
+            else:
+                hyperLink = "=HYPERLINK(\"{}\",\"{}\")".format(linkToPdf, id)
+            self.fcaSheet.cell(FcaSheet.FILE_LINK_CELL[0],
+                               FcaSheet.FILE_LINK_CELL[1],
+                               value=hyperLink)
 
     def getQuantity(self):
         return self.fcaSheet.cell(self.QUANTITY_CELL[0],
@@ -205,19 +200,58 @@ class FcaSheet:
 
 
 class Fca:
+    MUST_INCLUDE_CELL = {
+        (1, 1): "University",
+        (2, 1): "System",
+        (3, 1): "Assembly"
+    }
+    isFca: bool
     fcaSheets: List[FcaSheet]
     filePath: str
     fcaBook: Workbook
+    supplePdf: SupplPdf
+    hasSupplPdf: bool
 
-    def __init__(self, path: str, data_only=False):
+    def __init__(self, path: str, data_only=False, parseSupplPdf=False):
         self.filePath = path
+        self.supplePdf = None
+        self.hasSupplPdf = False
         self.fcaBook = openpyxl.load_workbook(path, data_only=data_only)
-        self.fcaSheets = []
-        for sheet in self.fcaBook.worksheets:
-            fcaSheet = FcaSheet(sheet)
-            if fcaSheet.isNotFcaSheet == False:
-                fcaSheet.putfcaFilePath(self.filePath)
-                self.fcaSheets.append(fcaSheet)
+        self._judge()
+        if self.isFca:
+            if parseSupplPdf:
+                self._parseSupplPdf()
+            self.fcaSheets = []
+            for sheet in self.fcaBook.worksheets:
+                fcaSheet = FcaSheet(sheet)
+                if fcaSheet.isNotFcaSheet == False:
+                    fcaSheet.putFcaData(self.filePath,
+                                        supplPdf=self.supplePdf,
+                                        hasSupplPdf=self.hasSupplPdf)
+                    self.fcaSheets.append(fcaSheet)
+
+    def _judge(self):
+        self.isFca = True
+        sheet0 = self.fcaBook.worksheets[0]
+        for cell, value in Fca.MUST_INCLUDE_CELL.items():
+            self.isFca = self.isFca and sheet0.cell(cell[0],
+                                                    cell[1]).value == value
+
+    def _parseSupplPdf(self):
+        directoryPath = relpath(self.filePath + "/..")
+        pdfPaths = glob(directoryPath + "/*.pdf")
+        pdfPaths.extend(glob(directoryPath + "/*.PDF"))
+        supplePdfs = []
+        for path in pdfPaths:
+            pdf = SupplPdf(path)
+            if pdf.isSupplPDF:
+                supplePdfs.append(pdf)
+        if len(supplePdfs) == 1:
+            self.supplePdf = supplePdfs[0]
+            self.hasSupplPdf = True
+        else:
+            self.supplePdf = None
+            self.hasSupplPdf = False
 
     def enterLinkToSuppleent(self):
         for sheet in self.fcaSheets:

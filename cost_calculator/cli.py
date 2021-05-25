@@ -1,5 +1,6 @@
 import argparse
-from cost_calculator import costTableToFca, fcaToBom
+from cost_calculator import __version__
+from cost_calculator import costTableToFca, fcaToBom, pdfTofca
 from typing import List, Optional
 
 
@@ -19,19 +20,29 @@ def _perform_args(args: argparse.Namespace) -> None:
         fcaDirectoryPath = args.fca_to_bom[0]
         bomFilePath = args.fca_to_bom[1]
         fcaToBom(fcaDirectoryPath, bomFilePath)
+    if args.pdf_to_fca:
+        pdfTofca(args.pdf_to_fca)
 
 
 def _parse_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
+    parser.add_argument("--version",
+                        action="version",
+                        version="%(prog)s" + __version__)
     parser.add_argument(
         "-ctf",
         "--costtable-to-fca",
         nargs=2,
-        help="5 Cost Table files' directory path and FCA files' directory path"
+        help="5 Cost Table files' directory path and FCA files' directory path."
     )
     parser.add_argument("-ftb",
                         "--fca-to-bom",
                         nargs=2,
-                        help="FCA files' directory path and BOM file path")
+                        help="FCA files' directory path and BOM file path.")
+    parser.add_argument(
+        "-ptf",
+        "--pdf-to-fca",
+        help="FCA files' directory path to write on the link to Supplement PDF."
+    )
 
     return parser.parse_args()
 

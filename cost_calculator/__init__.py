@@ -1,6 +1,6 @@
-__version__ = "0.1.0"
 __title__ = "cost_calculator"
 
+from cost_calculator.version import __version__
 from cost_calculator.cost_table import CostTable
 from cost_calculator.fca import Fca, FcaSheet, pdfTofca
 from cost_calculator.bom import BomSheet
