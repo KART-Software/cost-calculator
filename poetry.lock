@@ -98,8 +98,8 @@ python-versions = "*"
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.8.0"
-content-hash = "1f8aae61d638a26f6eeac6ef4b12f71471d811706e25f0e14ad52a819e41d366"
+python-versions = "^3.7.0"
+content-hash = "38d511ec2bf72cb3042041a9e9925ee44ca795a46dcd8acf464656215f3570d0"
 
 [metadata.files]
 cffi = [

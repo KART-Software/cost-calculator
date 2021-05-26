@@ -32,29 +32,29 @@ class BomSheet:
 
     def _detectBaseRowAndColumns(self):
         self.isNotBomSheet = True
-        for row in range(1, 10):
+        for row in range(1, 15):
             if self.bomSheet.cell(row, 1).value == 1:
                 if self.bomSheet.cell(row + 1, 1).value == 2:
                     self.baseRow = row - 1
                     self.isNotBomSheet = False
                     break
-
-        self.costColumns = [None, None, None, None, None]
-        for column in range(1, self.bomSheet.max_column + 1):
-            cellValue = self.bomSheet.cell(self.baseRow, column).value
-            if cellValue == "Asm/Prt #":
-                self.asmPrtColumn = column
-            if cellValue == "Component":
-                self.componentColumn = column
-            if cellValue == "Quantity":
-                self.quantityColumn = column
-            if cellValue == CostCategory.Material.categoryName + " Cost":
-                self.costColumns[CostCategory.Material] = column
-                self.costColumns[CostCategory.Process] = column + 1
-                self.costColumns[CostCategory.Fastener] = column + 2
-                self.costColumns[CostCategory.Tooling] = column + 3
-            if cellValue == "Link to FCA Sheet":
-                self.linkToFcaSheetColumn = column
+        if self.isNotBomSheet == False:
+            self.costColumns = [None, None, None, None, None]
+            for column in range(1, self.bomSheet.max_column + 1):
+                cellValue = self.bomSheet.cell(self.baseRow, column).value
+                if cellValue == "Asm/Prt #":
+                    self.asmPrtColumn = column
+                if cellValue == "Component":
+                    self.componentColumn = column
+                if cellValue == "Quantity":
+                    self.quantityColumn = column
+                if cellValue == CostCategory.Material.categoryName + " Cost":
+                    self.costColumns[CostCategory.Material] = column
+                    self.costColumns[CostCategory.Process] = column + 1
+                    self.costColumns[CostCategory.Fastener] = column + 2
+                    self.costColumns[CostCategory.Tooling] = column + 3
+                if cellValue == "Link to FCA Sheet":
+                    self.linkToFcaSheetColumn = column
 
     def _detectSystemAssemblyRowRanges(self):
         self.systemAssemblyRowRanges = [
@@ -72,30 +72,44 @@ class BomSheet:
                         startRow = row + 1
                         break
 
-    def enterData(self, fcaSheet: FcaSheet):
+    def enterData(self, fcaSheet: FcaSheet) -> bool:
         rowRange = self.systemAssemblyRowRanges[
             fcaSheet.systemAssemblyCategory]
-        component = fcaSheet.fcaSheet.title
+        component = fcaSheet.title
+        linkToFcaSheet = relpath(fcaSheet.fcaFilePath, self.filePath + "/..")
+        entered = False
+
         for row in range(rowRange[0], rowRange[1] + 1):
-            if self.bomSheet.cell(row, self.componentColumn).value.replace(
-                    " ", "").lower() == component.replace(" ", "").lower():
+            if str(self.bomSheet.cell(row,
+                                      self.componentColumn).value).replace(
+                                          " ",
+                                          "").lower() == component.replace(
+                                              " ", "").lower():
                 self.bomSheet.cell(row,
                                    self.quantityColumn,
                                    value=fcaSheet.getQuantity())
+                print("Quantity OK!!, ", end="")
                 for category in CostCategory:
                     if category != CostCategory.ProcessMultiplier:
                         self.bomSheet.cell(
                             row,
                             self.costColumns[category],
                             value=fcaSheet.getSubTotal(category))
-                linkToFcaSheet = relpath(fcaSheet.fcaFilePath,
-                                         self.filePath + "/..")
+                print("Costs OK!!, ", end="")
                 linkName = str(
                     self.bomSheet.cell(row, self.asmPrtColumn).value)
-                hyperLink = "=HYPERLINK(\"[" + linkToFcaSheet + "]\'" + component + "\'!A1\",\"" + linkName + "\")"
+                hyperLink = "=HYPERLINK(\"[{}]\'{}\'!A1\",\"{}\")".format(
+                    linkToFcaSheet, component, linkName)
+                # hyperLink = "=HYPERLINK(\"[" + linkToFcaSheet + "]\'" + component + "\'!A1\",\"" + linkName + "\")"
                 self.bomSheet.cell(row,
                                    self.linkToFcaSheetColumn,
                                    value=hyperLink)
+                print("Link to FCA OK!! : ", end="")
+                entered = True
+        if entered == False:
+            print("FCAのシート名と一致するBOMの行を見つけられませんでした。 : ", end="")
+        print("{} : {} :".format(fcaSheet.id, fcaSheet.title))
+        return entered
 
     # def deleteData(self):
     #     for category in SystemAssemblyCategory:
