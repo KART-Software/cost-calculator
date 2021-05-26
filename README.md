@@ -10,7 +10,7 @@ cost-calculator は、学生フォーミュラ(FSAEJ)におけるコスト審査
 * FCAファイルへの、裏付け資料(.pdf)へのリンクの書き込み。
 
 ## 互換性
-* Pythonのバージョンは3.7.0以上を仕様してください。
+* Pythonのバージョンは3.7.0以上を使用してください。
 
 ## インストール
 最初に、バージョン3.7.0以上のpython環境、pipを使える環境を用意してください。
@@ -99,6 +99,8 @@ poetryでパッケージ管理をしています。
 参考
 
 https://org-technology.com/posts/python-poetry.html
+https://cocoatomo.github.io/poetry-ja/
+https://kk6.hateblo.jp/entry/2018/12/20/124151
 
 ### 推奨
 
