@@ -7,7 +7,7 @@ with open(os.path.join(here, "cost_calculator", "version.py")) as fp:
     exec(fp.read())
 
 setup(
-    name="cost_calculator",
+    name="cos",
     version=__version__,
     author="Ryomei Osaki",
     author_email="o.ryomei1020@gmail.com",
@@ -15,7 +15,7 @@ setup(
     install_requires=["openpyxl", "pdfminer.six"],
     url="https://github.com/KART-Software/cost-calculator",
     entry_points={
-        "console_scripts": ["cost_calculator = cost_calculator.cli:main"],
+        "console_scripts": ["costcalc = cost_calculator.cli:main"],
     },
     python_requires=">=3.7",
     classifiers=[],
