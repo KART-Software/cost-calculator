@@ -11,7 +11,7 @@ setup(
     version=__version__,
     author="Ryomei Osaki",
     author_email="o.ryomei1020@gmail.com",
-    packages=["cost_calculator"],
+    packages=["cost_calcl"],
     install_requires=["openpyxl", "pdfminer.six"],
     url="https://github.com/KART-Software/cost-calculator",
     entry_points={
