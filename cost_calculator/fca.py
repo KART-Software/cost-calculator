@@ -267,7 +267,6 @@ class Fca:
         supplePdfs = []
         for path in pdfPaths:
             pdf = SupplPdf(path)
-            print(path, pdf.isSupplPDF)
             if pdf.isSupplPDF:
                 supplePdfs.append(pdf)
         if len(supplePdfs) == 1:
