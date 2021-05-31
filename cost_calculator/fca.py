@@ -264,7 +264,6 @@ class Fca:
     def _parseSupplPdf(self):
         directoryPath = relpath(self.filePath + "/..")
         pdfPaths = glob(directoryPath + "/*.pdf")
-        pdfPaths.extend(glob(directoryPath + "/*.PDF"))
         supplePdfs = []
         for path in pdfPaths:
             pdf = SupplPdf(path)
