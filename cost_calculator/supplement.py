@@ -7,6 +7,7 @@ from pdfminer.pdfpage import PDFPage
 
 class SupplPdf:
     STRINGS_MUST_INCLUDED = ["SOLIDWORKS", "裏付け資料"]
+    PAGES_TO_CHECK = [2]
 
     filePath: str
     isSupplPDF: bool
@@ -26,7 +27,7 @@ class SupplPdf:
         device = PDFPageAggregator(resource_manager, laparams=laparams)
         interpreter = PDFPageInterpreter(resource_manager, device)
         with open(self.filePath, "rb") as f:
-            pages = PDFPage.get_pages(f, pagenos=[0])
+            pages = PDFPage.get_pages(f, pagenos=SupplPdf.PAGES_TO_CHAECK)
             boxes = []
             for page in pages:
                 interpreter.process_page(page)
@@ -52,8 +53,6 @@ class SupplPdf:
 
                 boxes = findTextBoxesRecursively(
                     layout)  # ページ内のテキストボックスのリストを取得する。
-                # テキストボックスの左上の座標の順でテキストボックスをソートする。
-                # y1（Y座標の値）は上に行くほど大きくなるので、正負を反転させている。
                 self.boxesInPages.append(boxes)
 
     def pageOfId(self, id: str) -> int:
