@@ -27,7 +27,7 @@ class SupplPdf:
         device = PDFPageAggregator(resource_manager, laparams=laparams)
         interpreter = PDFPageInterpreter(resource_manager, device)
         with open(self.filePath, "rb") as f:
-            pages = PDFPage.get_pages(f, pagenos=SupplPdf.PAGES_TO_CHAECK)
+            pages = PDFPage.get_pages(f, pagenos=SupplPdf.PAGES_TO_CHECK)
             boxes = []
             for page in pages:
                 interpreter.process_page(page)
