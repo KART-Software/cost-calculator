@@ -6,8 +6,11 @@ from pdfminer.pdfpage import PDFPage
 
 
 class SupplPdf:
-    STRINGS_MUST_INCLUDED = ["SOLIDWORKS", "裏付け資料"]
-    PAGES_TO_CHECK = [2]
+    STRINGS_MUST_INCLUDED = [
+        "SOLIDWORKS", "裏付け資料", "複合材部品使用プリプレグ", "System Code", "Date:",
+        "Cost Report"
+    ]
+    PAGES_TO_CHECK = [0]
 
     filePath: str
     isSupplPDF: bool
