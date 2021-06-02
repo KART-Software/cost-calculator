@@ -102,7 +102,7 @@ class BomSheet:
                             print("Quantity OK!!, ", end="")
                         quantity = quantity_ * fcaSheet.asmQuantities[asmId]
                     else:
-                        print("Qtyを決定できません,  ", end="")
+                        print("Quantityを決定できません,  ", end="")
                         quantity = None
                 self.bomSheet.cell(row, self.quantityColumn, value=quantity)
                 # Costs
