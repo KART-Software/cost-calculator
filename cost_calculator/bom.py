@@ -85,10 +85,21 @@ class BomSheet:
                                           " ",
                                           "").lower() == component.replace(
                                               " ", "").lower():
-                self.bomSheet.cell(row,
-                                   self.quantityColumn,
-                                   value=fcaSheet.getQuantity())
-                print("Quantity OK!!, ", end="")
+                # Quantity
+                if fcaSheet.isAsmSheet:
+                    quantity = fcaSheet.getQuantity()
+                    print("Quantity OK!!, ", end="")
+                else:
+                    asmId = "A" + fcaSheet.id[:3] + "0"
+                    if fcaSheet.asmQuantities[asmId] != None:
+                        quantity = fcaSheet.getQuantity(
+                        ) * fcaSheet.asmQuantities[asmId]
+                        print("Quantity OK!!, ", end="")
+                    else:
+                        print("FcaファイルにQtyが入っていません : {}", asmId)
+                        quantity = None
+                self.bomSheet.cell(row, self.quantityColumn, value=quantity)
+                # Costs
                 for category in CostCategory:
                     if category != CostCategory.ProcessMultiplier:
                         self.bomSheet.cell(
@@ -96,6 +107,7 @@ class BomSheet:
                             self.costColumns[category],
                             value=fcaSheet.getSubTotal(category))
                 print("Costs OK!!, ", end="")
+                # Link to Fca Sheet
                 linkName = str(
                     self.bomSheet.cell(row, self.asmPrtColumn).value)
                 hyperLink = "=HYPERLINK(\"[{}]\'{}\'!A1\",\"{}\")".format(

@@ -43,6 +43,7 @@ class FcaSheet:
     systemAssemblyCategory: SystemAssemblyCategory
     isNotFcaSheet: bool
     fcaFilePath: str
+    asmQuantities: dict
 
     def __init__(self, fcaSheet: Worksheet):
         self.fcaSheet = fcaSheet
@@ -98,10 +99,12 @@ class FcaSheet:
                                   FcaSheet.ID_COLUMN - 1).value == "P/N Base":
                 self.idRow = row
 
-    def putFcaData(self, fcaFilePath, supplPdf: SupplPdf, hasSupplPdf: bool):
+    def putFcaData(self, fcaFilePath, supplPdf: SupplPdf, hasSupplPdf: bool,
+                   asmQuantities: dict):
         self.fcaFilePath = fcaFilePath
         self.supplPdf = supplPdf
         self.hasSupplPdf = hasSupplPdf
+        self.asmQuantities = asmQuantities
 
     def enterCost(self, category: CostCategory, costTable: CostTable):
         if category == CostCategory.Process:
@@ -204,8 +207,12 @@ class FcaSheet:
                                value=hyperLink)
 
     def getQuantity(self):
-        return self.fcaSheet.cell(self.QUANTITY_CELL[0],
-                                  self.QUANTITY_CELL[1]).value
+        cellValue = self.fcaSheet.cell(self.QUANTITY_CELL[0],
+                                       self.QUANTITY_CELL[1]).value
+        if cellValue != None:
+            return int(cellValue)
+        else:
+            return None
 
     def getSubTotal(self, category: CostCategory) -> Cost:
         cellvalue = self.fcaSheet.cell(self.categoryRowRanges[category][1] + 1,
@@ -222,6 +229,13 @@ class FcaSheet:
     def id(self) -> str:
         return str(self.fcaSheet.cell(self.idRow, FcaSheet.ID_COLUMN).value)
 
+    @property
+    def isAsmSheet(self) -> bool:
+        if self.id.startswith("A"):
+            return True
+        else:
+            return False
+
 
 class Fca:
     MUST_INCLUDE_CELL = {
@@ -235,11 +249,13 @@ class Fca:
     fcaBook: Workbook
     supplePdf: SupplPdf
     hasSupplPdf: bool
+    asmQuantities: dict
 
     def __init__(self, path: str, data_only=False, parseSupplPdf=False):
         self.filePath = path
         self.supplePdf = None
         self.hasSupplPdf = False
+        self.asmQuantities = {}
         self.fcaBook = openpyxl.load_workbook(path, data_only=data_only)
         self._judge()
         if self.isFca:
@@ -249,9 +265,13 @@ class Fca:
             for sheet in self.fcaBook.worksheets:
                 fcaSheet = FcaSheet(sheet)
                 if fcaSheet.isNotFcaSheet == False:
+                    if fcaSheet.isAsmSheet:
+                        self.asmQuantities[
+                            fcaSheet.id] = fcaSheet.getQuantity()
                     fcaSheet.putFcaData(self.filePath,
                                         supplPdf=self.supplePdf,
-                                        hasSupplPdf=self.hasSupplPdf)
+                                        hasSupplPdf=self.hasSupplPdf,
+                                        asmQuantities=self.asmQuantities)
                     self.fcaSheets.append(fcaSheet)
 
     def _judge(self):

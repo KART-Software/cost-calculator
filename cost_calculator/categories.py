@@ -47,7 +47,7 @@ class SystemAssemblyCategory(IntEnum):
                           ("Miscellaneous, Finish & Assembly",
                            "Miscellaneous, Finish and Assembly"),
                           ("Steering System", ),
-                          ("Suspension System", "Suspension"),
+                          ("Suspension System", "Suspension", "Suspension "),
                           ("Wheels, Wheel Bearings & Tires",
                            "Wheels, Wheel Bearings and Tires")]
         return CATEGORY_NAMES[self]
