@@ -88,15 +88,21 @@ class BomSheet:
                 # Quantity
                 if fcaSheet.isAsmSheet:
                     quantity = fcaSheet.getQuantity()
-                    print("Quantity OK!!, ", end="")
+                    if quantity == None:
+                        print("FcaファイルにQtyが入っていません, ", end="")
+                    else:
+                        print("Quantity OK!!, ", end="")
                 else:
                     asmId = "A" + fcaSheet.id[:3] + "0"
                     if fcaSheet.asmQuantities[asmId] != None:
-                        quantity = fcaSheet.getQuantity(
-                        ) * fcaSheet.asmQuantities[asmId]
-                        print("Quantity OK!!, ", end="")
+                        quantity_ = fcaSheet.getQuantity()
+                        if quantity_ == None:
+                            print("FcaファイルにQtyが入っていません, ", end="")
+                        else:
+                            print("Quantity OK!!, ", end="")
+                        quantity = quantity_ * fcaSheet.asmQuantities[asmId]
                     else:
-                        print("FcaファイルにQtyが入っていません : {}", asmId)
+                        print("Qtyを決定できません,  ", end="")
                         quantity = None
                 self.bomSheet.cell(row, self.quantityColumn, value=quantity)
                 # Costs
