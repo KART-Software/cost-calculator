@@ -76,15 +76,13 @@ class BomSheet:
         rowRange = self.systemAssemblyRowRanges[
             fcaSheet.systemAssemblyCategory]
         component = fcaSheet.title
+        asmPrt = fcaSheet.id
         linkToFcaSheet = relpath(fcaSheet.fcaFilePath, self.filePath + "/..")
         entered = False
 
         for row in range(rowRange[0], rowRange[1] + 1):
-            if str(self.bomSheet.cell(row,
-                                      self.componentColumn).value).replace(
-                                          " ",
-                                          "").lower() == component.replace(
-                                              " ", "").lower():
+            if str(self.bomSheet.cell(
+                    row, self.asmPrtColumn).value).lower() == asmPrt.lower():
                 # Quantity
                 if fcaSheet.isAsmSheet:
                     quantity = fcaSheet.getQuantity()
@@ -117,7 +115,7 @@ class BomSheet:
                 linkName = str(
                     self.bomSheet.cell(row, self.asmPrtColumn).value)
                 hyperLink = "=HYPERLINK(\"[{}]\'{}\'!A1\",\"{}\")".format(
-                    linkToFcaSheet, component, linkName)
+                    linkToFcaSheet, asmPrt, linkName)
                 # hyperLink = "=HYPERLINK(\"[" + linkToFcaSheet + "]\'" + component + "\'!A1\",\"" + linkName + "\")"
                 self.bomSheet.cell(row,
                                    self.linkToFcaSheetColumn,
