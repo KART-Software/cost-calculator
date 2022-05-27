@@ -22,6 +22,8 @@ class BomSheet:
     linkToFcaSheetColumn: int
     systemAssemblyRowRanges: List[tuple]
 
+    BASE_ROW_VALUES = ["Line Num.", "System Code", "Asm/Prt #"]
+
     def __init__(self, path: str):
         self.filePath = path
         self.bomBook = openpyxl.load_workbook(path)
@@ -33,11 +35,14 @@ class BomSheet:
     def _detectBaseRowAndColumns(self):
         self.isNotBomSheet = True
         for row in range(1, 15):
-            if self.bomSheet.cell(row, 1).value == 1:
-                if self.bomSheet.cell(row + 1, 1).value == 2:
-                    self.baseRow = row - 1
-                    self.isNotBomSheet = False
-                    break
+            isBaseRow = True
+            for column, value in enumerate(BomSheet.BASE_ROW_VALUES, start=1):
+                isBaseRow = isBaseRow and self.bomSheet.cell(
+                    row, column).value == value
+            if isBaseRow:
+                self.baseRow = row
+                self.isNotBomSheet = False
+                break
         if self.isNotBomSheet == False:
             self.costColumns = [None, None, None, None, None]
             for column in range(1, self.bomSheet.max_column + 1):
