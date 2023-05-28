@@ -42,8 +42,9 @@ class SystemAssemblyCategory(IntEnum):
     @property
     def categoryName(self) -> tuple:
         CATEGORY_NAMES = [("Brake System", ),
-                          ("Engine & Drivetrain", "Engine and Drivetrain"),
-                          ("Frame & Body", "Frame and Body"), ("Electrical", ),
+                          ("Engine & Drivetrain", "Engine and Drivetrain",
+                           "Drivetrain"), ("Frame & Body", "Frame and Body"),
+                          ("Electrical", ),
                           ("Miscellaneous, Finish & Assembly",
                            "Miscellaneous, Finish and Assembly"),
                           ("Steering System", ),
